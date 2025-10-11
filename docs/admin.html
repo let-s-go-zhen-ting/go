@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>後台審單</title>
+  <link rel="stylesheet" href="assets/ui.css">
+</head>
+<body>
+  <header>
+    <h1>後台審單</h1>
+    <div><button class="btn secondary" id="signOutBtn">登出</button></div>
+  </header>
+
+  <!-- 登入卡片：管理員用 Email/密碼登入 -->
+  <section class="card" id="loginCard">
+    <h2>管理員登入</h2>
+    <label>Email</label>
+    <input class="input" id="email" placeholder="YOUR_ADMIN_EMAIL@example.com">
+    <label>密碼</label>
+    <input class="input" id="password" type="password" placeholder="••••••••">
+    <div style="margin-top:12px"><button class="btn" id="loginBtn">登入</button></div>
+    <div class="small">請先在 Firebase Authentication 建立此帳號。</div>
+  </section>
+
+  <!-- 訂單列表卡片（登入後顯示） -->
+  <section class="card" id="ordersCard" style="display:none">
+    <h2>待審核（有上傳憑證）</h2>
+    <div id="orders"></div>
+  </section>
+
+  <script type="module">
+    import { auth, adminEmailPasswordSignIn, signOutNow, db } from "./assets/firebase.js";
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { collection, query, where, orderBy, getDocs, doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const loginCard = document.getElementById('loginCard');
+    const ordersCard = document.getElementById('ordersCard');
+    const ordersDiv = document.getElementById('orders');
+
+    // 點「登入」→ 呼叫 Email/密碼登入
+    document.getElementById('loginBtn').addEventListener('click', async ()=>{
+      const email = document.getElementById('email').value.trim();
+      const pw = document.getElementById('password').value;
+      await adminEmailPasswordSignIn(email, pw);
+    });
+
+    // 點「登出」→ 呼叫 signOut
+    document.getElementById('signOutBtn').addEventListener('click', ()=>signOutNow());
+
+    // 監聽登入狀態：
+    // - 若為管理員帳號（有 email），顯示訂單清單
+    // - 否則顯示登入表單
+    onAuthStateChanged(auth, u=>{
+      if(u && u.email){
+        loginCard.style.display = 'none';
+        ordersCard.style.display = 'block';
+        load();
+      }else{
+        loginCard.style.display = 'block';
+        ordersCard.style.display = 'none';
+      }
+    });
+
+    // 從 Firestore 撈出「已提交憑證」的訂單，讓你逐筆審核
+    async function load(){
+      // 建立查詢：paymentStatus == 'proof_submitted' 並依建立時間倒序
+      const q = query(collection(db, "orders"), where("paymentStatus","==","proof_submitted"), orderBy("createdAt","desc"));
+      const snaps = await getDocs(q);
+
+      // 先清空畫面
+      ordersDiv.innerHTML = "";
+
+      // 渲染每筆訂單
+      snaps.forEach(s=>{
+        const o = s.data();
+        const el = document.createElement('div');
+        el.className = 'card';
+        el.innerHTML = `
+          <div><strong>訂單 ${s.id}</strong>｜NT$ ${o.amount}</div>
+          <div>付款：${o.paymentMethod}｜狀態：${o.paymentStatus}</div>
+          <div>收件人：${o?.receiver?.name || ''}｜${o?.receiver?.phone || ''}</div>
+          <div>備註（買家）：${o?.notesFromBuyer || ''}</div>
+          <div>憑證：${(o.proofs||[]).map(p=>`<a target="_blank" href="${p.url}">查看</a>`).join('、') || '—'}</div>
+          <div style="margin-top:8px" class="row">
+            <button class="btn" data-action="paid" data-id="${s.id}">標記為已付款</button>
+            <button class="btn secondary" data-action="fail" data-id="${s.id}">退回</button>
+          </div>
+        `;
+        ordersDiv.appendChild(el);
+      });
+
+      // 事件代理：點按鈕就更新該訂單狀態
+      ordersDiv.addEventListener('click', async (e)=>{
+        if(e.target.matches('button[data-action]')){
+          const id = e.target.getAttribute('data-id');
+          const action = e.target.getAttribute('data-action');
+
+          if(action==='paid'){
+            // 管理員核對無誤 → 標記為已付款
+            await updateDoc(doc(db, "orders", id), {
+              paymentStatus: "paid",
+              adminMemo: "已核對款項",
+              paidAt: serverTimestamp()
+            });
+            alert('已標記為已付款');
+
+          }else if(action==='fail'){
+            // 管理員退回，並寫原因
+            const reason = prompt('退回原因：','金額不符/帳號不符…');
+            await updateDoc(doc(db, "orders", id), {
+              paymentStatus: "failed",
+              adminMemo: reason || ''
+            });
+            alert('已退回');
+          }
+
+          load(); // 更新清單
+        }
+      }, { once: true }); // 避免重複綁定事件
+    }
+  </script>
+</body>
+</html>
