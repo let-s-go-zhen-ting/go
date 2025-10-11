@@ -54,62 +54,66 @@
     <div>戶名：<strong>L&欸嘍</strong></div>
   </section>
 
-  <script type="module">
-    // 匯入 Firebase 工具（初始化、匿名登入、Firestore）
-    import { app, db, auth, ensureSignedInAnon } from "./assets/firebase.js";
-    import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+ <script type="module">
+  // 這頁只需要 Firestore（送單）與匿名登入
+  import { app, db, auth, ensureSignedInAnon } from "./assets/firebase.js?v=4";
+  import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-    // 讀取 localStorage 的購物車
-    function getCart(){ return JSON.parse(localStorage.getItem('cart')||'[]'); }
+  // 讀 localStorage 的購物車
+  function getCart(){ return JSON.parse(localStorage.getItem('cart')||'[]'); }
 
-    // 把購物車渲染成表格，同時計算總額；回傳 { cart, total }
-    function renderCart(){
-      const cart = getCart();
-      const body = document.querySelector('#cartTable tbody');
-      body.innerHTML = cart.map(i=>`<tr><td>${i.title}</td><td>${i.qty}</td><td>NT$ ${i.price*i.qty}</td></tr>`).join("");
-      const total = cart.reduce((s,i)=>s+i.price*i.qty,0);
-      document.getElementById('total').textContent = 'NT$ '+total;
-      return { cart, total };
+  // 把購物車渲染到表格
+  function renderCart(){
+    const cart = getCart();
+    const body = document.querySelector('#cartTable tbody');
+    if (!cart.length) {
+      body.innerHTML = `<tr><td colspan="3">購物車是空的，回<a href="index.html">首頁</a>挑選商品吧！</td></tr>`;
+      document.getElementById('total').textContent = 'NT$ 0';
+      return { cart, total: 0 };
     }
-    const { cart, total } = renderCart();
+    body.innerHTML = cart.map(i=>`<tr>
+      <td>${i.title}</td>
+      <td>${i.qty}</td>
+      <td>NT$ ${i.price*i.qty}</td>
+    </tr>`).join("");
+    const total = cart.reduce((s,i)=>s+i.price*i.qty,0);
+    document.getElementById('total').textContent = 'NT$ '+total;
+    return { cart, total };
+  }
+  let { cart, total } = renderCart();
 
-    // 送出訂單按鈕
-    document.getElementById('placeOrderBtn').addEventListener('click', async () => {
-      // 1) 防呆：購物車不可為空
-      if(cart.length===0){ alert('購物車是空的'); return; }
+  // 送出訂單
+  document.getElementById('placeOrderBtn').addEventListener('click', async () => {
+    cart = getCart(); // 再抓一次最新的
+    if(cart.length===0){ alert('購物車是空的'); return; }
 
-      // 2) 讀表單（最小驗證）
-      const name = document.getElementById('name').value.trim();
-      const phone = document.getElementById('phone').value.trim();
-      const address = document.getElementById('address').value.trim();
-      const pm = document.querySelector('input[name="pm"]:checked').value;
-      if(!name || !phone || !address){ alert('請把收件資料填好'); return; }
+    const name = document.getElementById('name').value.trim();
+    const phone = document.getElementById('phone').value.trim();
+    const address = document.getElementById('address').value.trim();
+    const pm = document.querySelector('input[name="pm"]:checked').value;
+    if(!name || !phone || !address){ alert('請把收件資料填好'); return; }
 
-      // 3) 匿名登入：取得 uid
-      await ensureSignedInAnon();
-      const uid = auth.currentUser.uid;
+    await ensureSignedInAnon();
+    const uid = auth.currentUser.uid;
 
-      // 4) 組訂單物件（注意：金額以 priceSnapshot 固定，避免後續改價影響舊訂單）
-      const order = {
-        uid,
-        items: cart.map(i=>({ productId:i.id, title:i.title, qty:i.qty, priceSnapshot:i.price })),
-        amount: total,
-        paymentMethod: pm,               // bank_transfer | cardless | cod
-        paymentStatus: "pending",        // 建立時先 pending
-        shipmentStatus: "none",          // 未出貨
-        receiver: { name, phone, address },
-        bankInfo: { bankCode:"700", account:"0123456789", accountName:"L&欸嘍" }, // 前端示意
-        createdAt: serverTimestamp(),    // 由伺服器填時間，避免用戶端時間不準
-        proofs: []                       // 之後上傳截圖會往這裡 push
-      };
+    const order = {
+      uid,
+      items: cart.map(i=>({ productId:i.id, title:i.title, qty:i.qty, priceSnapshot:i.price })),
+      amount: cart.reduce((s,i)=>s+i.price*i.qty,0),
+      paymentMethod: pm,
+      paymentStatus: "pending",
+      shipmentStatus: "none",
+      receiver: { name, phone, address },
+      createdAt: serverTimestamp(),
+      paymentReport: {},     // 之後可讓客人回報
+      notesFromBuyer: ""
+    };
 
-      // 5) 寫入 Firestore → 取得新訂單的 id
-      const ref = await addDoc(collection(db, "orders"), order);
+    const ref = await addDoc(collection(db, "orders"), order);
+    localStorage.removeItem('cart');
+    window.location.href = `order.html?id=${ref.id}`;
+  });
+</script>
 
-      // 6) 清空購物車，導向「訂單頁」讓買家可上傳截圖
-      localStorage.removeItem('cart');
-      window.location.href = `order.html?id=${ref.id}`;
-    });
-  </script>
 </body>
 </html>
