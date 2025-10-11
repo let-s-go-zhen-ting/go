@@ -1,5 +1,6 @@
 // docs/assets/app.js（首頁功能邏輯，含註解）
-import { auth, ensureSignedInAnon } from './firebase.js';
+import { auth, ensureSignedInAnon } from './firebase.js?v=2';
+
 
 /** 模擬產品資料（可日後改 Firestore） */
 export const PRODUCTS = [
