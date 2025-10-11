@@ -85,28 +85,53 @@ export function setupDrawer(){
   const mask = document.getElementById('drawerMask');
   const drawer = document.getElementById('drawer');
   const close = () => { drawer.classList.remove('open'); mask.classList.remove('show'); };
-  const open = () => { drawer.classList.add('open'); mask.classList.add('show'); };
+  const open  = () => { drawer.classList.add('open');  mask.classList.add('show');  };
   btn?.addEventListener('click', open);
   mask?.addEventListener('click', close);
 
-  ensureSignedInAnon().then(()=>{
-    const u = auth.currentUser;
-    const uid = u?.uid || 'guest';
-    const email = u?.email || '匿名使用者';
-    const box = document.getElementById('drawerProfile');
-    if(box){
-      box.innerHTML = `
-        <div class="drawer-header">
-          <div class="avatar">我</div>
-          <div>
-            <div><strong>${email}</strong></div>
-            <div class="small">UID：${uid.slice(0,8)}...</div>
-          </div>
+  // --- 保底內容（就算 Firebase 還沒成功也有東西看） ---
+  const box = document.getElementById('drawerProfile');
+  if (box) {
+    box.innerHTML = `
+      <div class="drawer-header">
+        <div class="avatar">我</div>
+        <div>
+          <div><strong>訪客</strong></div>
+          <div class="small">尚未載入使用者</div>
         </div>
-        <hr>
-        <div><a href="order.html" class="btn secondary">我的訂單</a></div>
-        <div style="margin-top:8px"><a href="admin.html" class="small">（管理員入口）</a></div>
-      `;
-    }
-  });
+        <button id="drawerClose" class="btn secondary" style="margin-left:auto;padding:4px 8px">關閉</button>
+      </div>
+      <hr>
+      <div><a href="order.html" class="btn secondary">我的訂單</a></div>
+      <div style="margin-top:8px"><a href="admin.html" class="small">（管理員入口）</a></div>
+    `;
+    document.getElementById('drawerClose')?.addEventListener('click', close);
+  }
+
+  // --- 之後再嘗試匿名登入，成功就把真實資料覆蓋上去 ---
+  ensureSignedInAnon()
+    .then(() => {
+      const u = auth.currentUser;
+      const uid = u?.uid || 'guest';
+      const email = u?.email || '匿名使用者';
+      if (box) {
+        box.innerHTML = `
+          <div class="drawer-header">
+            <div class="avatar">我</div>
+            <div>
+              <div><strong>${email}</strong></div>
+              <div class="small">UID：${uid.slice(0,8)}...</div>
+            </div>
+            <button id="drawerClose" class="btn secondary" style="margin-left:auto;padding:4px 8px">關閉</button>
+          </div>
+          <hr>
+          <div><a href="order.html" class="btn secondary">我的訂單</a></div>
+          <div style="margin-top:8px"><a href="admin.html" class="small">（管理員入口）</a></div>
+        `;
+        document.getElementById('drawerClose')?.addEventListener('click', close);
+      }
+    })
+    .catch(() => {
+      // 失敗就保留保底內容即可
+    });
 }
