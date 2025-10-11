@@ -12,9 +12,19 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{border:1px solid
 .small{font-size:12px;color:#6b7280}
 /* === Drawer & Avatar === */
 .avatar { width:36px; height:36px; border-radius:9999px; border:1px solid #e5e7eb; display:inline-flex; align-items:center; justify-content:center; font-weight:700 }
-#drawerMask { position:fixed; inset:0; background:rgba(0,0,0,.3); display:none }
-#drawer { position:fixed; inset:0 0 0 auto; width:300px; max-width:80vw; background:#fff; transform:translateX(100%); transition:transform .25s ease; box-shadow:-4px 0 16px rgba(0,0,0,.12); padding:16px; }
-#drawer.open { transform:translateX(0) }
+#drawerMask { position:fixed; inset:0; background:rgba(0,0,0,.3); display:none;z-index:40; }
+#drawer { position:fixed;
+  /* 這行改：靠左側 */
+  inset:0 auto 0 0;                 
+  width:300px; max-width:80vw;
+  background:#fff;
+  /* 這行改：從左邊滑入 */
+  transform:translateX(-100%);
+  transition:transform .25s ease;
+  box-shadow:4px 0 16px rgba(0,0,0,.12);
+  padding:16px;
+  z-index:50; }
+#drawer.open { transform:translateX(0); }
 #drawerMask.show { display:block }
 .drawer-header { display:flex; align-items:center; gap:12px; margin-bottom:12px }
 hr { border:0; border-top:1px solid #eee; margin:12px 0 }
