@@ -2,17 +2,19 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-export const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+const firebaseConfig = {
+  apiKey: "AIzaSyACzO994yOxUU30DXwN9kmPuu3y9i6u-Vk",
+  authDomain: "let-s-go-2e630.firebaseapp.com",
+  projectId: "let-s-go-2e630",
+  storageBucket: "let-s-go-2e630.firebasestorage.app",
+  messagingSenderId: "532753039027",
+  appId: "1:532753039027:web:cbcc61cfdd980e6e5ebac6",
+  measurementId: "G-BMBLBY8SP9"
 };
 
-export const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
 
 // 匿名登入：前台用戶不必註冊即可有 uid
 export async function ensureSignedInAnon() {
