@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>L&L 小店｜首頁</title>
+  <link rel="stylesheet" href="assets/ui.css">
+</head>
+<body>
+  <!-- 頂部：左上頭貼 → 開啟側拉；右側是購物車 -->
+  <header>
+    <button id="avatarBtn" class="avatar" aria-label="開啟個人選單">我</button>
+    <div style="margin-left:auto">
+      <a href="checkout.html" class="btn secondary">購物車/結帳</a>
+      <span class="badge" id="cartCount">0</span>
+    </div>
+  </header>
+
+  <!-- 搜尋 + 分類下拉 -->
+  <div class="toolbar">
+    <input id="search" class="search" placeholder="搜尋商品名稱…（例如 手幅）">
+    <select id="category" class="select">
+      <option value="ALL">全部分類</option>
+      <option value="周邊">周邊</option>
+      <option value="演出">演出</option>
+    </select>
+  </div>
+
+  <!-- 最近瀏覽 -->
+  <section class="card">
+    <h2>你最近看過</h2>
+    <div id="recentGrid" class="grid"></div>
+    <div class="small">（點「看一下」會記錄到這裡）</div>
+  </section>
+
+  <!-- 新上 -->
+  <section class="card">
+    <h2>新上</h2>
+    <div id="newGrid" class="grid"></div>
+  </section>
+
+  <!-- 全部商品（支援搜尋與分類） -->
+  <section class="card">
+    <h2>全部商品</h2>
+    <div id="allGrid" class="grid"></div>
+  </section>
+
+  <!-- 側拉抽屜 -->
+  <div id="drawerMask"></div>
+  <aside id="drawer" aria-label="個人側拉面板">
+    <div id="drawerProfile"></div>
+  </aside>
+
+  <script type="module">
+    import { setCart, getCart, renderCards, PRODUCTS, getRecent, filterProducts, setupDrawer } from './assets/app.js';
+
+    // 初始化購物車徽章
+    setCart(getCart());
+
+    // 新上
+    const newGrid = document.getElementById('newGrid');
+    const newList = PRODUCTS.filter(p=>p.isNew);
+    renderCards(newGrid, newList);
+
+    // 最近瀏覽
+    const recentGrid = document.getElementById('recentGrid');
+    const recentList = getRecent();
+    if(recentList.length){
+      renderCards(recentGrid, recentList);
+    }else{
+      recentGrid.innerHTML = '<div class="small">還沒有足跡喔～</div>';
+    }
+
+    // 全部商品 + 搜尋/分類
+    const allGrid = document.getElementById('allGrid');
+    const search = document.getElementById('search');
+    const category = document.getElementById('category');
+
+    function rerender(){
+      const list = filterProducts({ q: search.value, cat: category.value });
+      renderCards(allGrid, list);
+    }
+    rerender();
+    search.addEventListener('input', rerender);
+    category.addEventListener('change', rerender);
+
+    // 啟動側拉面板
+    setupDrawer();
+  </script>
+</body>
+</html>
