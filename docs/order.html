@@ -12,7 +12,6 @@
     <div><a class="btn secondary" href="index.html">回商店</a></div>
   </header>
 
-  <!-- 訂單基本資訊 -->
   <section class="card">
     <div>訂單編號：<strong id="oid">...</strong></div>
     <div>金額：<strong id="amount">...</strong></div>
@@ -21,36 +20,33 @@
   </section>
 
   <section class="card" id="lineReportBox" style="display:none">
-  <h2>付款回報（LINE）</h2>
-  <p class="small">請先按「複製回報內容」，再按「打開官方 LINE」貼上並傳送。</p>
-  <div class="row">
-    <button class="btn" id="copyLineMsg">複製回報內容</button>
-    <a class="btn secondary" id="openLine" target="_blank">打開官方 LINE</a>
-  </div>
-</section>
+    <h2>付款回報（LINE）</h2>
+    <p class="small">請先按「複製回報內容」，再按「打開官方 LINE」貼上並傳送。</p>
+    <div class="row">
+      <button class="btn" id="copyLineMsg">複製回報內容</button>
+      <a class="btn secondary" id="openLine" target="_blank">打開官方 LINE</a>
+    </div>
+  </section>
 
-
-  <script type="module">
+<script type="module">
   import { db, auth, ensureSignedInAnon } from "./assets/firebase.js?v=8";
   import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   const LINE_ID = '@你的官方LineID'; // 例：@abcd1234
-
-  function getParam(name){ return new URLSearchParams(location.search).get(name); }
+  function getParam(n){ return new URLSearchParams(location.search).get(n); }
   const orderId = getParam('id');
   document.getElementById('oid').textContent = orderId || '';
 
   async function load(){
     await ensureSignedInAnon();
-    const snap = await getDoc(doc(db,"orders",orderId));
+    const snap = await getDoc(doc(db, "orders", orderId));
     if(!snap.exists()){ alert('找不到訂單'); return; }
     const o = snap.data();
 
     document.getElementById('amount').textContent = 'NT$ '+o.amount;
-    document.getElementById('pm').textContent     = o.paymentMethod;
-    document.getElementById('ps').textContent     = o.paymentStatus;
+    document.getElementById('pm').textContent = o.paymentMethod;
+    document.getElementById('ps').textContent = o.paymentStatus;
 
-    // 付款回報（非貨到付款才顯示）
     if(o.paymentMethod !== 'cod'){
       const msg = [
         '【付款回報】',
@@ -60,8 +56,8 @@
         '匯款後五碼：_____（或存款日期/時間）',
         '備註：'
       ].join('\n');
-
-      document.getElementById('lineReportBox').style.display = 'block';
+      const box = document.getElementById('lineReportBox');
+      box.style.display = 'block';
       document.getElementById('copyLineMsg').onclick = async ()=>{
         try{ await navigator.clipboard.writeText(msg); alert('已複製，請貼到 LINE 傳給我們'); }
         catch{ alert('複製失敗，請手動複製'); }
@@ -71,6 +67,5 @@
   }
   load();
 </script>
-
 </body>
 </html>
