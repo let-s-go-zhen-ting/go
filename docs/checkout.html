@@ -192,6 +192,7 @@ try {
     }).catch(()=>{});
   }
 } catch (_) { /* 忽略錯誤，不影響導頁 */ }
+    localStorage.removeItem('cart');   // ← 加這行
 
     window.location.href = `order.html?id=${ref.id}`;
   });
