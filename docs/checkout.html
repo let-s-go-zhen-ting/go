@@ -194,7 +194,12 @@ try {
 } catch (_) { /* 忽略錯誤，不影響導頁 */ }
     localStorage.removeItem('cart');   // ← 加這行
 
-    window.location.href = `order.html?id=${ref.id}`;
+    // 在最後這兩行之間插入
+setTimeout(()=>{
+  window.location.href = `order.html?id=${ref.id}`;
+}, 500);
+return; // 確保不會再往下跑
+
   });
 </script>
 
