@@ -33,14 +33,14 @@
 
     <label>取貨方式</label>
     <div class="row">
-      <label><input type="radio" name="ship" value="seven" checked> 7-ELEVEN 交貨便</label>
+      <label><input type="radio" name="ship" value="seven" checked> 7-ELEVEN 取貨</label>
       <label><input type="radio" name="ship" value="meetup"> 面交（沙鹿/大甲/豐原/后里）</label>
     </div>
 
     <div id="sevenBox">
       <label>7-ELEVEN 門市名稱</label>
       <input class="input" id="sevenStoreName" placeholder="例如：台中中清門市">
-      <label>門市代碼（知道再填）</label>
+      <label>門市代碼（可不填）</label>
       <input class="input" id="sevenStoreId" placeholder="可留白">
     </div>
 
@@ -50,7 +50,7 @@
         <option value="">請選擇</option>
         <option>沙鹿</option><option>大甲</option><option>豐原</option><option>后里</option>
       </select>
-      <label>面交時間（可留白，之後 LINE 喬）</label>
+      <label>面交時間（可留白，後續會用官方Line聯繫您）</label>
       <input class="input" id="meetupTime" placeholder="例如：週六 下午 3 點">
     </div>
 
@@ -61,7 +61,7 @@
       <label><input type="radio" name="pm" value="cod"> 貨到付款</label>
     </div>
 
-    <div class="small">匯款/無卡：下單後到 LINE 回報；面交在現場付款也可（可在備註說明）。</div>
+    <div class="small">匯款/無卡：下單後到LINE回報；面交時現場付款也可（可在備註說明）。</div>
     <div style="margin-top:12px"><button class="btn" id="placeOrderBtn">送出訂單</button></div>
   </section>
 
