@@ -21,30 +21,58 @@
 
   <!-- 收件與付款資訊 -->
   <section class="card">
-    <h2>收件與付款</h2>
-    <div class="row">
-      <div style="flex:1">
-        <label>收件人姓名</label>
-        <input class="input" id="name" placeholder="王小明">
-      </div>
-      <div style="flex:1">
-        <label>電話</label>
-        <input class="input" id="phone" placeholder="0912345678" inputmode="numeric" pattern="[0-9]*" maxlength="10">
+  <h2>收件與付款</h2>
+  <div class="row">
+    <div style="flex:1">
+      <label>收件人姓名</label>
+      <input class="input" id="name" placeholder="王小明">
+    </div>
+    <div style="flex:1">
+      <label>電話</label>
+      <input class="input" id="phone" placeholder="0912345678" inputmode="numeric" pattern="[0-9]*" maxlength="10">
+    </div>
+  </div>
 
-      </div>
-    </div>
-    <label>地址</label>
-    <input class="input" id="address" placeholder="台中市...">
-    <label>付款方式</label>
-    <div class="row">
-      <!-- 預設選匯款，你可依需求改 default -->
-      <label><input type="radio" name="pm" value="bank_transfer" checked> 匯款</label>
-      <label><input type="radio" name="pm" value="cardless"> 無卡存款</label>
-      <label><input type="radio" name="pm" value="cod"> 貨到付款</label>
-    </div>
-    <div class="small">匯款/無卡：下單後請在訂單頁上傳匯款截圖。貨到付款：出貨後再收款。</div>
-    <div style="margin-top:12px"><button class="btn" id="placeOrderBtn">送出訂單</button></div>
-  </section>
+  <!-- 取貨方式 -->
+  <label>取貨方式</label>
+  <div class="row">
+    <label><input type="radio" name="ship" value="seven" checked> 7-ELEVEN 交貨便</label>
+    <label><input type="radio" name="ship" value="meetup"> 面交（沙鹿/大甲/豐原/后里）</label>
+  </div>
+
+  <!-- 7-11：門市資訊 -->
+  <div id="sevenBox">
+    <label>7-ELEVEN 門市名稱</label>
+    <input class="input" id="sevenStoreName" placeholder="例如：台中中清門市">
+    <label>門市代碼（知道再填）</label>
+    <input class="input" id="sevenStoreId" placeholder="可留白">
+  </div>
+
+  <!-- 面交：地點下拉與備註時間 -->
+  <div id="meetupBox" style="display:none">
+    <label>面交地點</label>
+    <select class="input" id="meetupPlace">
+      <option value="">請選擇</option>
+      <option>沙鹿</option>
+      <option>大甲</option>
+      <option>豐原</option>
+      <option>后里</option>
+    </select>
+    <label>面交時間（可留白，之後 LINE 喬）</label>
+    <input class="input" id="meetupTime" placeholder="例如：週六 下午 3 點">
+  </div>
+
+  <label>付款方式</label>
+  <div class="row">
+    <label><input type="radio" name="pm" value="bank_transfer" checked> 匯款</label>
+    <label><input type="radio" name="pm" value="cardless"> 無卡存款</label>
+    <label><input type="radio" name="pm" value="cod"> 貨到付款</label>
+  </div>
+
+  <div class="small">匯款/無卡：下單後到 LINE 回報；面交在現場付款也可（可在備註說明）。</div>
+  <div style="margin-top:12px"><button class="btn" id="placeOrderBtn">送出訂單</button></div>
+</section>
+
 
   <!-- 匯款資訊（前端硬編，或改成從 Firestore 讀取） -->
   <section class="card">
@@ -82,22 +110,52 @@
     return { cart, total };
   }
   let { cart, total } = renderCart();
-   // 只允許數字，移除所有非數字字元，限制 10 碼
-document.getElementById('phone').addEventListener('input', (e) => {
-  e.target.value = e.target.value.replace(/\D/g, '').slice(0, 10);
-});
 
+  // 電話只允許 10 碼數字
+  document.getElementById('phone').addEventListener('input', (e) => {
+    e.target.value = e.target.value.replace(/\D/g, '').slice(0, 10);
+  });
 
-  // 送出訂單
+  // === 新增：切換顯示區塊（7-11 / 面交） ===
+  const sevenBox = document.getElementById('sevenBox');
+  const meetupBox = document.getElementById('meetupBox');
+  document.querySelectorAll('input[name="ship"]').forEach(r=>{
+    r.addEventListener('change', ()=>{
+      const val = document.querySelector('input[name="ship"]:checked').value;
+      sevenBox.style.display = (val==='seven') ? 'block' : 'none';
+      meetupBox.style.display = (val==='meetup') ? 'block' : 'none';
+    });
+  });
+
+  // === 新版送出訂單（取代你原本的 address 版本） ===
   document.getElementById('placeOrderBtn').addEventListener('click', async () => {
-    cart = getCart(); // 再抓一次最新的
+    let cart = getCart(); // 再抓一次最新的
     if(cart.length===0){ alert('購物車是空的'); return; }
 
     const name = document.getElementById('name').value.trim();
     const phone = document.getElementById('phone').value.trim();
-    const address = document.getElementById('address').value.trim();
+    if(!name){ alert('請輸入收件人姓名'); return; }
+    if(!/^\d{10}$/.test(phone)){ alert('電話請輸入 10 碼數字（例如 0912345678）'); return; }
+
+    const ship = document.querySelector('input[name="ship"]:checked').value;
+
+    // 收件資訊：依取貨方式組資料
+    let deliveryMethod, deliveryDetails;
+    if (ship === 'seven') {
+      const storeName = document.getElementById('sevenStoreName').value.trim();
+      const storeId = document.getElementById('sevenStoreId').value.trim();
+      if(!storeName){ alert('請填 7-ELEVEN 門市名稱'); return; }
+      deliveryMethod = 'seven';
+      deliveryDetails = { storeName, storeId };
+    } else {
+      const place = document.getElementById('meetupPlace').value;
+      const time = document.getElementById('meetupTime').value.trim();
+      if(!place){ alert('請選擇面交地點'); return; }
+      deliveryMethod = 'meetup';
+      deliveryDetails = { place, time };
+    }
+
     const pm = document.querySelector('input[name="pm"]:checked').value;
-    if(!name || !phone || !address){ alert('請把收件資料填好'); return; }
 
     await ensureSignedInAnon();
     const uid = auth.currentUser.uid;
@@ -109,9 +167,11 @@ document.getElementById('phone').addEventListener('input', (e) => {
       paymentMethod: pm,
       paymentStatus: "pending",
       shipmentStatus: "none",
-      receiver: { name, phone, address },
+      receiver: { name, phone },   // ← 不再存 address
+      deliveryMethod,              // 'seven' | 'meetup'
+      deliveryDetails,             // {storeName,storeId} 或 {place,time}
       createdAt: serverTimestamp(),
-      paymentReport: {},     // 之後可讓客人回報
+      paymentReport: {},
       notesFromBuyer: ""
     };
 
@@ -120,6 +180,7 @@ document.getElementById('phone').addEventListener('input', (e) => {
     window.location.href = `order.html?id=${ref.id}`;
   });
 </script>
+
 
 </body>
 </html>
