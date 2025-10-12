@@ -82,6 +82,11 @@
     return { cart, total };
   }
   let { cart, total } = renderCart();
+   // 只允許數字，移除所有非數字字元，限制 10 碼
+document.getElementById('phone').addEventListener('input', (e) => {
+  e.target.value = e.target.value.replace(/\D/g, '').slice(0, 10);
+});
+
 
   // 送出訂單
   document.getElementById('placeOrderBtn').addEventListener('click', async () => {
