@@ -175,27 +175,48 @@
       notesFromBuyer: ""
     };
 
-    const ref = await addDoc(collection(db, "orders"), order);
+    // ① 產生自訂 ID：YYYYMMDD-0001（用 transaction 取得當日序號）
+import { doc, setDoc, runTransaction, collection } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-    const payload = JSON.stringify({ token: 'LAL_SEC_1', id: ref.id, ...order });
+const today = new Date();
+const y = today.getFullYear();
+const m = String(today.getMonth()+1).padStart(2,'0');
+const d = String(today.getDate()).padStart(2,'0');
+const ymd = `${y}${m}${d}`;
 
+const seqRef = doc(db, 'sequences', ymd);
+const nextNo = await runTransaction(db, async (t) => {
+  const snap = await t.get(seqRef);
+  const current = snap.exists() ? (snap.data().n || 0) : 0;
+  const next = current + 1;
+  t.set(seqRef, { n: next, updatedAt: serverTimestamp() }, { merge: true });
+  return next;
+});
+const orderId = `${ymd}-${String(nextNo).padStart(4,'0')}`;
+
+// ② 用自訂 ID 建立訂單
+await setDoc(doc(collection(db, "orders"), orderId), order);
+
+// ③ 同步到試算表（用自訂的 orderId）
+const payload = JSON.stringify({ token: 'LAL_SEC_1', id: orderId, ...order });
 try {
   const ok = navigator.sendBeacon(
     'https://script.google.com/macros/s/AKfycbxm1PCyw3wVPp7ZrWyFIwfavFN3CXGSOnIWYVEjr1zbCPWyWquRMqg9PSWr2KiZnkiy/exec',
-    new Blob([payload], { type: 'text/plain' }) // ← 改成 text/plain
+    new Blob([payload], { type: 'text/plain' })
   );
   if (!ok) {
     fetch('https://script.google.com/macros/s/AKfycbxm1PCyw3wVPp7ZrWyFIwfavFN3CXGSOnIWYVEjr1zbCPWyWquRMqg9PSWr2KiZnkiy/exec', {
       method: 'POST',
-      headers: { 'Content-Type': 'text/plain' }, // ← 改成 text/plain
+      headers: { 'Content-Type': 'text/plain' },
       body: payload
     }).catch(()=>{});
   }
 } catch (_) {}
 
 localStorage.removeItem('cart');
-setTimeout(()=>{ window.location.href = `order.html?id=${ref.id}`; }, 500);
+setTimeout(()=>{ window.location.href = `order.html?id=${orderId}`; }, 500);
 return;
+
 
 
   });
