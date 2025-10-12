@@ -4,8 +4,8 @@ import { auth, ensureSignedInAnon } from './firebase.js?v=6';
 
 /** 模擬產品資料（可日後改 Firestore） */
 export const PRODUCTS = [
-  { id:'p1', title:'L 字鑰匙圈', price:120, category:'周邊', isNew:true },
-  { id:'p2', title:'L Logo 貼紙包', price:80, category:'周邊', isNew:false },
+  { id:'p1', title:'林子晴簽名照', price:120, category:'周邊', isNew:true },
+  { id:'p2', title:'林子閔的飛吻', price:80, category:'周邊', isNew:false },
   { id:'p3', title:'Let’s Go 手幅', price:180, category:'演出', isNew:true },
   { id:'p4', title:'應援手燈吊飾', price:220, category:'周邊', isNew:false },
 ];
