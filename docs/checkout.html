@@ -182,23 +182,21 @@
 try {
   const ok = navigator.sendBeacon(
     'https://script.google.com/macros/s/AKfycbxm1PCyw3wVPp7ZrWyFIwfavFN3CXGSOnIWYVEjr1zbCPWyWquRMqg9PSWr2KiZnkiy/exec',
-    new Blob([payload], { type: 'application/json' })
+    new Blob([payload], { type: 'text/plain' }) // ← 改成 text/plain
   );
   if (!ok) {
     fetch('https://script.google.com/macros/s/AKfycbxm1PCyw3wVPp7ZrWyFIwfavFN3CXGSOnIWYVEjr1zbCPWyWquRMqg9PSWr2KiZnkiy/exec', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'text/plain' }, // ← 改成 text/plain
       body: payload
     }).catch(()=>{});
   }
-} catch (_) { /* 忽略錯誤，不影響導頁 */ }
-    localStorage.removeItem('cart');   // ← 加這行
+} catch (_) {}
 
-    // 在最後這兩行之間插入
-setTimeout(()=>{
-  window.location.href = `order.html?id=${ref.id}`;
-}, 500);
-return; // 確保不會再往下跑
+localStorage.removeItem('cart');
+setTimeout(()=>{ window.location.href = `order.html?id=${ref.id}`; }, 500);
+return;
+
 
   });
 </script>
