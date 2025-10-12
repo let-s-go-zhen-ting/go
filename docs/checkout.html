@@ -176,16 +176,15 @@
     };
 
     const ref = await addDoc(collection(db, "orders"), order);
-    // 同步到 Google 試算表（使用 Apps Script Web App）
-// 若你的 Apps Script 有做 TOKEN 驗證，兩邊的字串要相同；沒做就把 token 這行拿掉
+
+    const payload = JSON.stringify({ token: 'LAL_SEC_1', id: ref.id, ...order });
+
 try {
-  const payload = JSON.stringify({ token: 'LAL_SEC_1', id: ref.id, ...order });
   const ok = navigator.sendBeacon(
     'https://script.google.com/macros/s/AKfycbxdBl3QenD2h7eBqU38mP8yijCgY4HqYe-qU-xUUoDUdD0VcJcxOPDs58T_35Sv7w/exec',
     new Blob([payload], { type: 'application/json' })
   );
   if (!ok) {
-    // 保底：若 sendBeacon 失敗就用非阻擋 fetch
     fetch('https://script.google.com/macros/s/AKfycbxdBl3QenD2h7eBqU38mP8yijCgY4HqYe-qU-xUUoDUdD0VcJcxOPDs58T_35Sv7w/exec', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -194,7 +193,6 @@ try {
   }
 } catch (_) { /* 忽略錯誤，不影響導頁 */ }
 
-    localStorage.removeItem('cart');
     window.location.href = `order.html?id=${ref.id}`;
   });
 </script>
