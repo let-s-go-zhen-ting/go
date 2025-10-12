@@ -20,76 +20,57 @@
     <div>付款狀態：<strong id="ps">...</strong></div>
   </section>
 
-  <!-- 匯款/無卡：上傳憑證區塊（貨到付款會自動隱藏） -->
-  <section class="card" id="proofArea">
-    <h2>上傳匯款/無卡憑證</h2>
-    <input type="file" id="file" accept="image/*">  <!-- 只允許圖片 -->
-    <button class="btn" id="uploadBtn">上傳截圖</button>
-    <div class="small">請確保截圖清楚顯示金額、帳號、時間。上限 8MB。</div>
-    <div id="proofList"></div> <!-- 顯示已上傳連結 -->
-  </section>
+  <section class="card" id="lineReportBox" style="display:none">
+  <h2>付款回報（LINE）</h2>
+  <p class="small">請先按「複製回報內容」，再按「打開官方 LINE」貼上並傳送。</p>
+  <div class="row">
+    <button class="btn" id="copyLineMsg">複製回報內容</button>
+    <a class="btn secondary" id="openLine" target="_blank">打開官方 LINE</a>
+  </div>
+</section>
+
 
   <script type="module">
-    // 匯入 Firestore/Storage
-    import { db, storage, auth, ensureSignedInAnon } from "./assets/firebase.js";
-    import { doc, getDoc, updateDoc, arrayUnion, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-    import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
+  import { db, auth, ensureSignedInAnon } from "./assets/firebase.js?v=8";
+  import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-    // 讀取網址參數 ?id=xxxx
-    function getParam(name){ return new URLSearchParams(location.search).get(name); }
-    const orderId = getParam('id');
-    document.getElementById('oid').textContent = orderId || '';
+  const LINE_ID = '@你的官方LineID'; // 例：@abcd1234
 
-    // 載入訂單資料並渲染
-    async function load(){
-      await ensureSignedInAnon(); // 前台也要登入（匿名）才可讀自己的訂單
-      const snap = await getDoc(doc(db, "orders", orderId));
-      if(!snap.exists()){ alert('找不到訂單'); return; }
-      const o = snap.data();
+  function getParam(name){ return new URLSearchParams(location.search).get(name); }
+  const orderId = getParam('id');
+  document.getElementById('oid').textContent = orderId || '';
 
-      // 基本資訊
-      document.getElementById('amount').textContent = 'NT$ '+o.amount;
-      document.getElementById('pm').textContent = o.paymentMethod;
-      document.getElementById('ps').textContent = o.paymentStatus;
+  async function load(){
+    await ensureSignedInAnon();
+    const snap = await getDoc(doc(db,"orders",orderId));
+    if(!snap.exists()){ alert('找不到訂單'); return; }
+    const o = snap.data();
 
-      // 已上傳清單（提供連結讓使用者點開檢查）
-      const list = document.getElementById('proofList');
-      list.innerHTML = (o.proofs||[]).map(p=>`<div class="small"><a href="${p.url}" target="_blank">已上傳截圖（點我看）</a></div>`).join("");
+    document.getElementById('amount').textContent = 'NT$ '+o.amount;
+    document.getElementById('pm').textContent     = o.paymentMethod;
+    document.getElementById('ps').textContent     = o.paymentStatus;
 
-      // 如果是貨到付款（cod），就不顯示上傳區塊
-      document.getElementById('proofArea').style.display = o.paymentMethod==='cod' ? 'none' : 'block';
+    // 付款回報（非貨到付款才顯示）
+    if(o.paymentMethod !== 'cod'){
+      const msg = [
+        '【付款回報】',
+        `訂單編號：${orderId}`,
+        `金額：NT$ ${o.amount}`,
+        `付款方式：${o.paymentMethod==='bank_transfer'?'匯款':'無卡存款'}`,
+        '匯款後五碼：_____（或存款日期/時間）',
+        '備註：'
+      ].join('\n');
+
+      document.getElementById('lineReportBox').style.display = 'block';
+      document.getElementById('copyLineMsg').onclick = async ()=>{
+        try{ await navigator.clipboard.writeText(msg); alert('已複製，請貼到 LINE 傳給我們'); }
+        catch{ alert('複製失敗，請手動複製'); }
+      };
+      document.getElementById('openLine').href = `https://line.me/R/ti/p/${encodeURIComponent(LINE_ID)}`;
     }
+  }
+  load();
+</script>
 
-    // 上傳按鈕事件
-    document.getElementById('uploadBtn').addEventListener('click', async ()=>{
-      const file = document.getElementById('file').files[0];
-      if(!file){ alert('先選一張圖片'); return; }
-
-      // 1) 確保匿名登入，取得 uid（Storage 規則需要）
-      await ensureSignedInAnon();
-      const uid = auth.currentUser.uid;
-
-      // 2) 以「固定路徑規格」上傳：orders/{orderId}/proofs/{uid}/{檔名}
-      const path = `orders/${orderId}/proofs/${uid}/${Date.now()}-${file.name}`;
-      const r = ref(storage, path);
-      await uploadBytes(r, file);        // Storage 規則會檢查大小與檔型
-
-      // 3) 取回該檔案的公開下載 URL（給後台點開檢查）
-      const url = await getDownloadURL(r);
-
-      // 4) 更新 Firestore 訂單：
-      //    - paymentStatus -> proof_submitted（標示「已提交憑證」）
-      //    - proofs 陣列 append 一筆記錄（包含 url、時間、上傳者）
-      await updateDoc(doc(db, "orders", orderId), {
-        paymentStatus: "proof_submitted",
-        proofs: arrayUnion({ url, uploadedAt: serverTimestamp(), uploaderUid: uid })
-      });
-
-      alert('上傳成功！');
-      load(); // 重新載入畫面
-    });
-
-    load();
-  </script>
 </body>
 </html>
