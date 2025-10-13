@@ -115,19 +115,7 @@ export function renderCards(container, products) {
 
 
 
-  // 只綁一次事件，不用 { once:true }
-  if (!container._bound) {
-    container.addEventListener('click', (ev)=>{
-      const btn = ev.target.closest('button[data-action]');
-      if(!btn) return;
-      const id = btn.dataset.id;
-      const action = btn.dataset.action;
-      if(action==='add'){ addToCartById(id); }
-      if(action==='view'){ pushRecent(id); alert('已記錄最近瀏覽：' + id); }
-    });
-    container._bound = true;
-  }
-}
+
 
 
 // 搜尋與分類
