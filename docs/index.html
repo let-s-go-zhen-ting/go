@@ -98,8 +98,9 @@
 
     function rerender(){
   let list = filterProducts({ q: search.value, cat: category.value });
+
   const f = document.getElementById('filter').value;
-  if (f === 'new') list = list.filter(p => p.isNew);
+  if (f === 'new')     list = list.filter(p => p.isNew);
   if (f === 'instock') list = list.filter(p => (p.stock ?? 0) > 0);
 
   const s = document.getElementById('sort').value;
@@ -108,7 +109,6 @@
 
   renderCards(allGrid, list);
 }
-rerender();
 search.addEventListener('input', rerender);
 category.addEventListener('change', rerender);
 document.getElementById('sort').addEventListener('change', rerender);
