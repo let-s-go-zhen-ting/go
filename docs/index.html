@@ -92,26 +92,30 @@
 
     // 全部商品 + 搜尋/分類
     const allGrid = document.getElementById('allGrid');
-    const search = document.getElementById('search');
-    const category = document.getElementById('category');
+  const search  = document.getElementById('search');
+  const category= document.getElementById('category');
 
-    function rerender(){
-  let list = filterProducts({ q: search.value, cat: category.value });
+  function rerender(){
+    let list = filterProducts({ q: search.value, cat: category.value });
 
-  const f = document.getElementById('filter').value;
-  if (f === 'new')     list = list.filter(p => p.isNew);
-  if (f === 'instock') list = list.filter(p => (p.stock ?? 0) > 0);
+    const f = document.getElementById('filter').value;
+    if (f === 'new')     list = list.filter(p => p.isNew);
+    if (f === 'instock') list = list.filter(p => (p.stock ?? 0) > 0);
 
-  const s = document.getElementById('sort').value;
-  if (s === 'price_asc')  list = list.slice().sort((a,b)=> a.price - b.price);
-  if (s === 'price_desc') list = list.slice().sort((a,b)=> b.price - a.price);
+    const s = document.getElementById('sort').value;
+    if (s === 'price_asc')  list = list.slice().sort((a,b)=> a.price - b.price);
+    if (s === 'price_desc') list = list.slice().sort((a,b)=> b.price - a.price);
 
-  renderCards(allGrid, list);
-}
-search.addEventListener('input', rerender);
-category.addEventListener('change', rerender);
-document.getElementById('sort').addEventListener('change', rerender);
-document.getElementById('filter').addEventListener('change', rerender);
+    renderCards(allGrid, list);
+  }
+
+  search.addEventListener('input', rerender);
+  category.addEventListener('change', rerender);
+  document.getElementById('sort').addEventListener('change', rerender);
+  document.getElementById('filter').addEventListener('change', rerender);
+
+  rerender();  // 👈 這行一定要有，首次渲染
+  setupDrawer();
 
 
     // 啟動側拉面板
