@@ -2,13 +2,37 @@
 import { auth, ensureSignedInAnon } from './firebase.js?v=6';
 
 
-/** 模擬產品資料（可日後改 Firestore） */
-export const PRODUCTS = [
-  { id:'p1', title:'林子晴簽名照', price:120, category:'周邊', isNew:true },
-  { id:'p2', title:'林子閔的飛吻', price:80, category:'周邊', isNew:false },
-  { id:'p3', title:'Let’s Go 手幅', price:180, category:'演出', isNew:true },
-  { id:'p4', title:'應援手燈吊飾', price:220, category:'周邊', isNew:false },
-];
+// === 從 Google 試算表載入商品（gviz JSON） ===
+export let PRODUCTS = [];
+
+export async function initProducts(SPREADSHEET_ID, SHEET_NAME = '商品') {
+  const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_NAME)}`;
+  const txt = await fetch(url, { cache: 'no-store' }).then(r => r.text());
+  // gviz 會包一層：/**/google.visualization.Query.setResponse({...})
+  const json = JSON.parse(txt.substring(txt.indexOf('{'), txt.lastIndexOf('}') + 1));
+  const cols = json.table.cols.map(c => c.label); // ['id','title','price'...]
+  const rows = json.table.rows || [];
+
+  // 轉陣列物件
+  const list = rows.map(r => {
+    const obj = {};
+    r.c.forEach((cell, i) => obj[cols[i]] = cell ? cell.v : '');
+    return {
+      id: String(obj.id || '').trim(),
+      title: String(obj.title || '').trim(),
+      price: Number(obj.price || 0),
+      category: String(obj.category || '').trim() || '其他',
+      isNew: String(obj.isNew || '').toUpperCase() === 'TRUE',
+      stock: Number(obj.stock || 0),
+      image: String(obj.image || '').trim(),
+      isHidden: String(obj.isHidden || '').toUpperCase() === 'TRUE',
+    };
+  }).filter(p => p.id && !p.isHidden);
+
+  // 設定全域 PRODUCTS
+  PRODUCTS = list;
+}
+
 
 // 購物車：localStorage 簡單實作
 export function getCart(){ return JSON.parse(localStorage.getItem('cart')||'[]'); }
