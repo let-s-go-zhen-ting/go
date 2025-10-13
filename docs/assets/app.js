@@ -18,6 +18,7 @@ export async function initProducts(SPREADSHEET_ID, SHEET_NAME = '商品') {
       id: String(obj.id || '').trim(),
       title: String(obj.title || '').trim(),
       price: Number(obj.price || 0),
+      origin: String(obj.origin||'').trim(),
       category: String(obj.category || '').trim() || '其他',
       isNew: String(obj.isNew || '').toUpperCase() === 'TRUE',
       stock: Number(obj.stock || 0),
