@@ -72,17 +72,18 @@ export function getRecent(){
 export function renderCards(container, products){
   container.innerHTML = products.map(p => `
     <div class="card" data-pid="${p.id}">
-      <div class="row" style="justify-content:space-between">
-        <strong>${p.title}</strong>
-        ${p.isNew ? '<span class="badge new">NEW</span>' : ''}
-      </div>
-      <div>分類：${p.category}</div>
-      <div>NT$ ${p.price}</div>
-      <div class="row">
-        <button class="btn" data-action="add" data-id="${p.id}">加入購物車</button>
-        <button class="btn secondary" data-action="view" data-id="${p.id}">看一下</button>
-      </div>
-    </div>
+  <div class="row" style="justify-content:space-between">
+    <strong>${p.title}</strong>
+    ${p.isNew ? '<span class="badge new">NEW</span>' : ''}
+  </div>
+  ${p.image ? `<img src="${p.image}" alt="${p.title}" style="width:100%;border-radius:8px">` : ''}
+  <div>分類：${p.category}</div>
+  <div>NT$ ${p.price} ${p.stock>0 ? `<span class="small">（庫存 ${p.stock}）</span>` : '<span class="small" style="color:#b91c1c">（缺貨）</span>'}</div>
+  <div class="row">
+    <button class="btn" data-action="add" data-id="${p.id}" ${p.stock<=0?'disabled':''}>加入購物車</button>
+    <button class="btn secondary" data-action="view" data-id="${p.id}">看一下</button>
+  </div>
+</div>
   `).join('');
 
   // 只綁一次事件，不用 { once:true }
