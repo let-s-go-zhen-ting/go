@@ -67,71 +67,75 @@
 </aside>
 
 
-  <script type="module">
-  import { setCart, getCart, renderCards, getRecent, filterProducts, setupDrawer, initProducts, PRODUCTS } from './assets/app.js?v=3';
+<script type="module">
+  import {
+    setCart, getCart, renderCards, getRecent,
+    filterProducts, setupDrawer, initProducts, PRODUCTS
+  } from './assets/app.js?v=3';
 
   // 先抓試算表，再渲染
   await initProducts('1BDw71gFOYp0e2kqOZFkfbV5v1dgC99kgwUEaHwjvxTk','商品');
 
-    // 初始化購物車徽章
-    setCart(getCart());
+  // DOM
+  const recentGrid = document.getElementById('recentGrid');
+  const newGrid    = document.getElementById('newGrid');
+  const allGrid    = document.getElementById('allGrid');
 
-    const recentGrid = document.getElementById('recentGrid');
-const newGrid    = document.getElementById('newGrid');
-const allGrid    = document.getElementById('allGrid');
+  const search     = document.getElementById('search');
+  const originSel  = document.getElementById('origin');   // 韓團 / 中國 / ALL
+  const category   = document.getElementById('category'); // 演唱會 / 回憶錄 / default
+  const filterSel  = document.getElementById('filter');   // all / new / instock
 
-const search     = document.getElementById('search');
-const category   = document.getElementById('category');
-const groupSel   = document.getElementById('group');   // 可能不存在
-const sortSel    = document.getElementById('sort');    // 可能不存在
-const filterSel  = document.getElementById('filter');  // 可能不存在
+  // 購物車徽章
+  setCart(getCart());
 
-function filterByUI(list){
-  const cat = category?.value || 'ALL';
-  const grp = groupSel?.value || 'ALL';
-  const f   = filterSel?.value || 'all';
+  // 依目前 UI 條件過濾任一清單
+  function filterByUI(list){
+    const org = originSel?.value || 'ALL';
+    const cat = category?.value || 'default';
+    const f   = filterSel?.value || 'all';
 
-  let out = list.filter(p =>
-    (cat==='ALL' || p.category===cat) &&
-    (grp==='ALL' || p.group===grp)
-  );
-  if (f === 'new')     out = out.filter(p => p.isNew);
-  if (f === 'instock') out = out.filter(p => (p.stock ?? 0) > 0);
-  return out;
-}
+    let out = list;
 
-function rerender(){
-  let all = filterProducts({
-    q:  search?.value || '',
-    cat: category?.value || 'ALL',
-    group: groupSel?.value || 'ALL',
-  });
-  all = filterByUI(all);
-  if (sortSel?.value === 'price_asc')  all = all.slice().sort((a,b)=>a.price-b.price);
-  if (sortSel?.value === 'price_desc') all = all.slice().sort((a,b)=>b.price-a.price);
-  renderCards(allGrid, all);
+    // origin（需要 PRODUCTS 物件有 p.origin 欄位；沒有就先略過或到 app.js 加上對應欄位）
+    if (org !== 'ALL') out = out.filter(p => (p.origin === org));
 
-  const recent = filterByUI(getRecent());
-  recentGrid.innerHTML = recent.length ? '' : '<div class="small">還沒有足跡喔～</div>';
-  if (recent.length) renderCards(recentGrid, recent);
+    // category：預設值 "default" 代表不篩
+    if (cat !== 'default') out = out.filter(p => (p.category === cat));
 
-  const newest = filterByUI(PRODUCTS.filter(p=>p.isNew));
-  renderCards(newGrid, newest);
-}
+    if (f === 'new')     out = out.filter(p => p.isNew);
+    if (f === 'instock') out = out.filter(p => (p.stock ?? 0) > 0);
 
-search?.addEventListener('input', rerender);
-category?.addEventListener('change', rerender);
-groupSel?.addEventListener('change', rerender);
-sortSel?.addEventListener('change', rerender);
-filterSel?.addEventListener('change', rerender);
+    // 搜尋
+    const kw = (search?.value || '').trim().toLowerCase();
+    if (kw) out = out.filter(p => (p.title || '').toLowerCase().includes(kw));
 
-rerender();
-setupDrawer();
+    return out;
+  }
 
+  function rerender(){
+    // 全部商品
+    renderCards(allGrid, filterByUI(PRODUCTS));
 
+    // 最近看過
+    const recent = filterByUI(getRecent());
+    recentGrid.innerHTML = recent.length ? '' : '<div class="small">還沒有足跡喔～</div>';
+    if (recent.length) renderCards(recentGrid, recent);
 
-    // 啟動側拉面板
-    setupDrawer();
-  </script>
+    // 新上
+    renderCards(newGrid, filterByUI(PRODUCTS.filter(p=>p.isNew)));
+  }
+
+  // 綁事件（只綁存在的元素）
+  search?.addEventListener('input', rerender);
+  originSel?.addEventListener('change', rerender);
+  category?.addEventListener('change', rerender);
+  filterSel?.addEventListener('change', rerender);
+
+  // 首次渲染 + 側拉
+  rerender();
+  setupDrawer();
+</script>
+
 </body>
 </html>
