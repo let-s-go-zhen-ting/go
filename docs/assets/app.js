@@ -104,14 +104,16 @@ export function renderCards(container, products) {
 }
 
 // === 搜尋與分類 ===
-export function filterProducts({q='', cat='ALL'} = {}){
+export function filterProducts({ q='', cat } = {}) {
   const kw = q.trim().toLowerCase();
+  const isAll = !cat || cat === 'ALL' || cat === '全部分類';
   return PRODUCTS.filter(p => {
-    const okCat = (cat==='ALL') || (p.category===cat);
-    const okKw = !kw || (p.title.toLowerCase().includes(kw));
+    const okCat = isAll || p.category === cat;
+    const okKw  = !kw || p.title.toLowerCase().includes(kw);
     return okCat && okKw;
   });
 }
+
 
 // === 側拉面板 ===
 export function setupDrawer(){
