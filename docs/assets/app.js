@@ -78,11 +78,11 @@ export function getRecent(){
 }
 
 // 千分位
-const fmt = n => n.toLocaleString('zh-Hant-TW');
+const fmt = n => Number(n || 0).toLocaleString('zh-Hant-TW');
 
 // 渲染卡片（點圖/標題 → 詳情頁）
-export function renderCards(container, products){
-  container.innerHTML = products.map(p => `
+export function renderCards(container, products) {
+  container.innerHTML = (products || []).map(p => `
     <div class="card" data-pid="${p.id}">
       <a href="product.html?id=${encodeURIComponent(p.id)}" style="text-decoration:none;color:inherit">
         <div class="row" style="justify-content:space-between;align-items:flex-start">
@@ -104,14 +104,15 @@ export function renderCards(container, products){
     </div>
   `).join('');
 
-  container.addEventListener('click', ev=>{
+  container.addEventListener('click', ev => {
     const btn = ev.target.closest('button[data-action]');
-    if(!btn) return;
+    if (!btn) return;
     const id = btn.getAttribute('data-id');
     const action = btn.getAttribute('data-action');
-    if(action==='add'){ addToCartById(id); }
-  }, { once:true });
+    if (action === 'add') { addToCartById(id); }
+  }, { once: true });
 }
+
 
 
   // 只綁一次事件，不用 { once:true }
