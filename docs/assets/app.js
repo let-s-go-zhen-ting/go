@@ -71,20 +71,26 @@ export function getRecent(){
 // === 渲染卡片 ===
 const fmt = n => Number(n || 0).toLocaleString('zh-Hant-TW');
 
+// === 渲染卡片（長條樣式 + NEW 在標題後、兩顆按鈕並排）===
 export function renderCards(container, products){
-  // 想用長條樣式的容器，請加上 .list（見下一步）
+  const fmt = n => Number(n || 0).toLocaleString('zh-Hant-TW');
+
   container.innerHTML = (products||[]).map(p => `
     <div class="card row-card" data-pid="${p.id}">
       <a href="product.html?id=${encodeURIComponent(p.id)}">
-        ${p.image ? `<img class="thumb" src="${p.image}" alt="${p.title}">`
-                  : `<div class="thumb" style="background:#f3f4f6"></div>`}
+        ${p.image
+          ? `<img class="thumb" src="${p.image}" alt="${p.title}">`
+          : `<div class="thumb" style="background:#f3f4f6"></div>`}
       </a>
+
       <div class="meta">
         <div class="title">
-          ${p.title} ${p.isNew ? '<span class="badge new" style="margin-left:8px">NEW</span>' : ''}
+          ${p.title}
+          ${p.isNew ? '<span class="badge new" style="margin-left:8px">NEW</span>' : ''}
         </div>
         <div class="sub">分類：${p.category||'其他'}　庫存：${p.stock ?? 0}</div>
         <div class="price">NT$ ${fmt(p.price)}</div>
+
         <div class="actions">
           <button class="btn" data-action="add" data-id="${p.id}" ${(p.stock??0)<=0?'disabled':''}>加入購物車</button>
           <a class="btn secondary" href="product.html?id=${encodeURIComponent(p.id)}">看一下</a>
@@ -93,7 +99,7 @@ export function renderCards(container, products){
     </div>
   `).join('');
 
-  // 綁加入購物車
+  // 綁加入購物車（保持一次綁定）
   if (!container._bound) {
     container.addEventListener('click', (ev)=>{
       const btn = ev.target.closest('button[data-action="add"]');
@@ -103,6 +109,7 @@ export function renderCards(container, products){
     container._bound = true;
   }
 }
+
 
 
 // === 搜尋與分類 ===
