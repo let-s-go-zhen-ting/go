@@ -80,5 +80,5 @@ hr { border:0; border-top:1px solid #eee; margin:12px 0 }
 
 /* 列表視圖改為多欄，每張自然變短 */
 .grid.list{
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); /* 調 420 可更短/更長 */
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); /* 調 420 可更短/更長 */
 }
