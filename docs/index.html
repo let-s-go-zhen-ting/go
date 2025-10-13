@@ -8,23 +8,21 @@
 </head>
 <body>
   <!-- 頂部：左上頭貼 → 開啟側拉；右側是購物車 -->
-  <header>
-    <button id="avatarBtn" class="avatar" aria-label="開啟個人選單">我</button>
-    <div style="margin-left:auto">
-      <a href="checkout.html" class="btn secondary">購物車/結帳</a>
-      <span class="badge" id="cartCount">0</span>
-    </div>
-  </header>
+  <header class="header-bar">
+  <button id="avatarBtn" class="avatar" aria-label="開啟個人選單">我</button>
 
-  <!-- 搜尋 + 分類下拉 -->
-  <div class="toolbar">
-    <input id="search" class="search" placeholder="搜尋商品名稱…（例如 手幅）">
-    <select id="category" class="select">
-      <option value="ALL">全部分類</option>
-      <option value="周邊">周邊</option>
-      <option value="演出">演出</option>
-    </select>
-  </div>
+  <input id="search" class="search flex1" placeholder="搜尋商品名稱…（例如 手幅）">
+
+  <select id="category" class="select">
+    <option value="ALL">全部分類</option>
+    <option value="周邊">周邊</option>
+    <option value="演出">演出</option>
+  </select>
+
+  <a href="checkout.html" class="btn secondary">購物車/結帳</a>
+  <span class="badge" id="cartCount">0</span>
+</header>
+
 
   <!-- 最近瀏覽 -->
   <section class="card">
