@@ -53,8 +53,10 @@
 
 
   <script type="module">
-  import { setCart, getCart, renderCards, PRODUCTS, getRecent, filterProducts, setupDrawer } from './assets/app.js?v=2';
+  import { setCart, getCart, renderCards, getRecent, filterProducts, setupDrawer, initProducts, PRODUCTS } from './assets/app.js';
 
+  // ★ 先從試算表載入商品（頂層 await OK）
+  await initProducts('1BDw71gFOYp0e2kqOZFkfbV5v1dgC99kgwUEaHwjvxTk', '商品');
 
     // 初始化購物車徽章
     setCart(getCart());
