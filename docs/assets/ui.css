@@ -78,3 +78,7 @@ hr { border:0; border-top:1px solid #eee; margin:12px 0 }
   .row-card .thumb { width:96px; height:96px; }
 }
 
+/* 列表視圖改為多欄，每張自然變短 */
+.grid.list{
+  grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); /* 調 420 可更短/更長 */
+}
