@@ -77,23 +77,42 @@ export function getRecent(){
   return ids.map(id=>map.get(id)).filter(Boolean);
 }
 
-// 渲染卡片
+// 千分位
+const fmt = n => n.toLocaleString('zh-Hant-TW');
+
+// 渲染卡片（點圖/標題 → 詳情頁）
 export function renderCards(container, products){
   container.innerHTML = products.map(p => `
     <div class="card" data-pid="${p.id}">
-  <div class="row" style="justify-content:space-between">
-    <strong>${p.title}</strong>
-    ${p.isNew ? '<span class="badge new">NEW</span>' : ''}
-  </div>
-  ${p.image ? `<img src="${p.image}" alt="${p.title}" style="width:100%;border-radius:8px">` : ''}
-  <div>分類：${p.category}</div>
-  <div>NT$ ${p.price} ${p.stock>0 ? `<span class="small">（庫存 ${p.stock}）</span>` : '<span class="small" style="color:#b91c1c">（缺貨）</span>'}</div>
-  <div class="row">
-    <button class="btn" data-action="add" data-id="${p.id}" ${p.stock<=0?'disabled':''}>加入購物車</button>
-    <button class="btn secondary" data-action="view" data-id="${p.id}">看一下</button>
-  </div>
-</div>
+      <a href="product.html?id=${encodeURIComponent(p.id)}" style="text-decoration:none;color:inherit">
+        <div class="row" style="justify-content:space-between;align-items:flex-start">
+          <strong style="font-size:16px;line-height:1.3">${p.title}</strong>
+          ${p.isNew ? '<span class="badge new">NEW</span>' : ''}
+        </div>
+        ${p.image ? `<img src="${p.image}" alt="${p.title}" style="width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:10px;margin:8px 0;">` : ''}
+      </a>
+      <div>分類：${p.category || '其他'}</div>
+      <div>NT$ ${fmt(p.price)} ${
+        (p.stock ?? 0) > 0
+          ? `<span class="small">（庫存 ${p.stock}）</span>`
+          : `<span class="small" style="color:#b91c1c">（缺貨）</span>`
+      }</div>
+      <div class="row" style="margin-top:8px">
+        <button class="btn" data-action="add" data-id="${p.id}" ${(p.stock ?? 0) <= 0 ? 'disabled' : ''}>加入購物車</button>
+        <a class="btn secondary" data-action="view" data-id="${p.id}" href="product.html?id=${encodeURIComponent(p.id)}">看一下</a>
+      </div>
+    </div>
   `).join('');
+
+  container.addEventListener('click', ev=>{
+    const btn = ev.target.closest('button[data-action]');
+    if(!btn) return;
+    const id = btn.getAttribute('data-id');
+    const action = btn.getAttribute('data-action');
+    if(action==='add'){ addToCartById(id); }
+  }, { once:true });
+}
+
 
   // 只綁一次事件，不用 { once:true }
   if (!container._bound) {
