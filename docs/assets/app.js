@@ -31,6 +31,15 @@ export async function initProducts(SPREADSHEET_ID, SHEET_NAME = '商品') {
 
   // 設定全域 PRODUCTS
   PRODUCTS = list;
+  // 預設：如果表是空的，保留原本 demo 以免整頁空白
+  if (!PRODUCTS.length) {
+    PRODUCTS = [
+      { id:'p1', title:'L 字鑰匙圈', price:120, category:'周邊', isNew:true, stock:99 },
+      { id:'p2', title:'L Logo 貼紙包', price:80, category:'周邊', isNew:false, stock:50 },
+      { id:'p3', title:'Let’s Go 手幅', price:180, category:'演出', isNew:true, stock:20 },
+      { id:'p4', title:'應援手燈吊飾', price:220, category:'周邊', isNew:false, stock:0 },
+    ];
+  }
 }
 
 
