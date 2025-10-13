@@ -32,5 +32,12 @@ hr { border:0; border-top:1px solid #eee; margin:12px 0 }
 .select, .search { padding:8px 10px; border:1px solid #d1d5db; border-radius:10px }
 .badge.new { border-color:#2563eb; color:#2563eb }
 .header-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:16px 0}
-.flex1{flex:1 1 280px}
-.header-bar .select{min-width:140px}
+.flex1{flex:1 1 260px;min-width:220px;max-width:420px;} /* 搜尋框彈性但不會太寬 */
+.header-bar .select{min-width:130px;flex:0 0 auto}
+.cart-group{margin-left:auto;display:flex;align-items:center;gap:6px;white-space:nowrap}
+
+/* 寬螢幕一律不換行，確保同一水平 */
+@media (min-width: 900px){
+  .header-bar{flex-wrap:nowrap}
+}
+
