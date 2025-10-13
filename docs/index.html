@@ -13,14 +13,32 @@
 
   <input id="search" class="search flex1" placeholder="搜尋商品名稱…（例如 手幅）">
 
+  <!-- 下拉 1：分類 -->
   <select id="category" class="select">
     <option value="ALL">全部分類</option>
     <option value="周邊">周邊</option>
     <option value="演出">演出</option>
   </select>
 
-  <a href="checkout.html" class="btn secondary">購物車/結帳</a>
-  <span class="badge" id="cartCount">0</span>
+  <!-- 下拉 2：排序 -->
+  <select id="sort" class="select">
+    <option value="default">預設排序</option>
+    <option value="price_asc">價格低→高</option>
+    <option value="price_desc">價格高→低</option>
+  </select>
+
+  <!-- 下拉 3：篩選 -->
+  <select id="filter" class="select">
+    <option value="all">全部商品</option>
+    <option value="new">只看新上</option>
+    <option value="instock">只看有庫存</option>
+  </select>
+
+  <!-- 購物車固定最右 -->
+  <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
+    <a href="checkout.html" class="btn secondary">購物車/結帳</a>
+    <span class="badge" id="cartCount">0</span>
+  </div>
 </header>
 
 
