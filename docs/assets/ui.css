@@ -31,3 +31,6 @@ hr { border:0; border-top:1px solid #eee; margin:12px 0 }
 .toolbar { display:flex; gap:8px; align-items:center; margin:12px 0; flex-wrap:wrap }
 .select, .search { padding:8px 10px; border:1px solid #d1d5db; border-radius:10px }
 .badge.new { border-color:#2563eb; color:#2563eb }
+.header-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:16px 0}
+.flex1{flex:1 1 280px}
+.header-bar .select{min-width:140px}
