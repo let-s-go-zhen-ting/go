@@ -71,41 +71,39 @@ export function getRecent(){
 // === 渲染卡片 ===
 const fmt = n => Number(n || 0).toLocaleString('zh-Hant-TW');
 
-export function renderCards(container, products) {
-  container.innerHTML = (products || []).map(p => `
-    <div class="card" data-pid="${p.id}">
-      <a href="product.html?id=${encodeURIComponent(p.id)}" style="text-decoration:none;color:inherit">
-        <div class="row" style="justify-content:space-between;align-items:flex-start">
-          <strong style="font-size:16px;line-height:1.3">${p.title}</strong>
-          ${p.isNew ? '<span class="badge new">NEW</span>' : ''}
-        </div>
-        ${p.image
-  ? `<div class="imgbox"><img src="${p.image}" alt="${p.title}"></div>`
-  : ''}
-
-
+export function renderCards(container, products){
+  // 想用長條樣式的容器，請加上 .list（見下一步）
+  container.innerHTML = (products||[]).map(p => `
+    <div class="card row-card" data-pid="${p.id}">
+      <a href="product.html?id=${encodeURIComponent(p.id)}">
+        ${p.image ? `<img class="thumb" src="${p.image}" alt="${p.title}">`
+                  : `<div class="thumb" style="background:#f3f4f6"></div>`}
       </a>
-      <div>分類：${p.category || '其他'}</div>
-      <div>NT$ ${fmt(p.price)} ${
-        (p.stock ?? 0) > 0
-          ? `<span class="small">（庫存 ${p.stock}）</span>`
-          : `<span class="small" style="color:#b91c1c">（缺貨）</span>`
-      }</div>
-      <div class="row" style="margin-top:8px">
-        <button class="btn" data-action="add" data-id="${p.id}" ${(p.stock ?? 0) <= 0 ? 'disabled' : ''}>加入購物車</button>
-        <a class="btn secondary" data-action="view" data-id="${p.id}" href="product.html?id=${encodeURIComponent(p.id)}">看一下</a>
+      <div class="meta">
+        <div class="title">
+          ${p.title} ${p.isNew ? '<span class="badge new" style="margin-left:8px">NEW</span>' : ''}
+        </div>
+        <div class="sub">分類：${p.category||'其他'}　庫存：${p.stock ?? 0}</div>
+        <div class="price">NT$ ${fmt(p.price)}</div>
+        <div class="actions">
+          <button class="btn" data-action="add" data-id="${p.id}" ${(p.stock??0)<=0?'disabled':''}>加入購物車</button>
+          <a class="btn secondary" href="product.html?id=${encodeURIComponent(p.id)}">看一下</a>
+        </div>
       </div>
     </div>
   `).join('');
 
-  container.addEventListener('click', ev => {
-    const btn = ev.target.closest('button[data-action]');
-    if (!btn) return;
-    const id = btn.getAttribute('data-id');
-    const action = btn.getAttribute('data-action');
-    if (action === 'add') { addToCartById(id); }
-  }, { once: true });
+  // 綁加入購物車
+  if (!container._bound) {
+    container.addEventListener('click', (ev)=>{
+      const btn = ev.target.closest('button[data-action="add"]');
+      if(!btn) return;
+      addToCartById(btn.dataset.id);
+    });
+    container._bound = true;
+  }
 }
+
 
 // === 搜尋與分類 ===
 export function filterProducts({ q='', cat } = {}) {
