@@ -76,46 +76,58 @@
     // 初始化購物車徽章
     setCart(getCart());
 
-    // 新上
-    const newGrid = document.getElementById('newGrid');
-    const newList = PRODUCTS.filter(p=>p.isNew);
-    renderCards(newGrid, newList);
-
-    // 最近瀏覽
     const recentGrid = document.getElementById('recentGrid');
-    const recentList = getRecent();
-    if(recentList.length){
-      renderCards(recentGrid, recentList);
-    }else{
-      recentGrid.innerHTML = '<div class="small">還沒有足跡喔～</div>';
-    }
+const newGrid    = document.getElementById('newGrid');
+const allGrid    = document.getElementById('allGrid');
 
-    // 全部商品 + 搜尋/分類
-    const allGrid = document.getElementById('allGrid');
-  const search  = document.getElementById('search');
-  const category= document.getElementById('category');
+const search     = document.getElementById('search');
+const category   = document.getElementById('category');
+const groupSel   = document.getElementById('group');   // 可能不存在
+const sortSel    = document.getElementById('sort');    // 可能不存在
+const filterSel  = document.getElementById('filter');  // 可能不存在
 
-  function rerender(){
-    let list = filterProducts({ q: search.value, cat: category.value });
+function filterByUI(list){
+  const cat = category?.value || 'ALL';
+  const grp = groupSel?.value || 'ALL';
+  const f   = filterSel?.value || 'all';
 
-    const f = document.getElementById('filter').value;
-    if (f === 'new')     list = list.filter(p => p.isNew);
-    if (f === 'instock') list = list.filter(p => (p.stock ?? 0) > 0);
+  let out = list.filter(p =>
+    (cat==='ALL' || p.category===cat) &&
+    (grp==='ALL' || p.group===grp)
+  );
+  if (f === 'new')     out = out.filter(p => p.isNew);
+  if (f === 'instock') out = out.filter(p => (p.stock ?? 0) > 0);
+  return out;
+}
 
-    const s = document.getElementById('sort').value;
-    if (s === 'price_asc')  list = list.slice().sort((a,b)=> a.price - b.price);
-    if (s === 'price_desc') list = list.slice().sort((a,b)=> b.price - a.price);
+function rerender(){
+  let all = filterProducts({
+    q:  search?.value || '',
+    cat: category?.value || 'ALL',
+    group: groupSel?.value || 'ALL',
+  });
+  all = filterByUI(all);
+  if (sortSel?.value === 'price_asc')  all = all.slice().sort((a,b)=>a.price-b.price);
+  if (sortSel?.value === 'price_desc') all = all.slice().sort((a,b)=>b.price-a.price);
+  renderCards(allGrid, all);
 
-    renderCards(allGrid, list);
-  }
+  const recent = filterByUI(getRecent());
+  recentGrid.innerHTML = recent.length ? '' : '<div class="small">還沒有足跡喔～</div>';
+  if (recent.length) renderCards(recentGrid, recent);
 
-  search.addEventListener('input', rerender);
-  category.addEventListener('change', rerender);
-  document.getElementById('sort').addEventListener('change', rerender);
-  document.getElementById('filter').addEventListener('change', rerender);
+  const newest = filterByUI(PRODUCTS.filter(p=>p.isNew));
+  renderCards(newGrid, newest);
+}
 
-  rerender();  // 👈 這行一定要有，首次渲染
-  setupDrawer();
+search?.addEventListener('input', rerender);
+category?.addEventListener('change', rerender);
+groupSel?.addEventListener('change', rerender);
+sortSel?.addEventListener('change', rerender);
+filterSel?.addEventListener('change', rerender);
+
+rerender();
+setupDrawer();
+
 
 
     // 啟動側拉面板
