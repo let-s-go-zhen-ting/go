@@ -42,12 +42,20 @@ hr { border:0; border-top:1px solid #eee; margin:12px 0 }
 }
 
 /* assets/ui.css */
-.card img, .pimg{
+.card .imgbox{
   width: 100%;
-  height: auto;      /* 等比例縮放 */
-  display: block;
+  height: 150px;           /* 想多小就改這裡 */
+  background: #fafafa;
   border-radius: 10px;
+  display:flex;align-items:center;justify-content:center;
+  overflow:hidden;         /* 防止溢出 */
   margin: 8px 0;
-  max-height: 300px; /* 想限制最大高度可加，不想就刪掉 */
+}
+.card .imgbox img{
+  max-width: 100%;
+  max-height: 100%;
+  height: auto;            /* 等比例縮放 */
+  width: auto;
+  object-fit: contain;     /* 不裁切、完整呈現 */
 }
 
