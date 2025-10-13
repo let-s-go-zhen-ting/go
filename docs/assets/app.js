@@ -79,7 +79,10 @@ export function renderCards(container, products) {
           <strong style="font-size:16px;line-height:1.3">${p.title}</strong>
           ${p.isNew ? '<span class="badge new">NEW</span>' : ''}
         </div>
-        ${p.image ? `<img class="pimg" src="${p.image}" alt="${p.title}">` : ''}
+        ${p.image
+  ? `<div class="imgbox"><img src="${p.image}" alt="${p.title}"></div>`
+  : ''}
+
 
       </a>
       <div>分類：${p.category || '其他'}</div>
