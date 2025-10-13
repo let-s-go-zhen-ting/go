@@ -59,3 +59,22 @@ hr { border:0; border-top:1px solid #eee; margin:12px 0 }
   object-fit: contain;     /* 不裁切、完整呈現 */
 }
 
+/* === List-style product card === */
+.grid.list { grid-template-columns: 1fr; }           /* 一列一張 */
+.card.row-card { display:flex; gap:12px; align-items:center; }
+
+.row-card .thumb {
+  width:120px; height:120px; flex:0 0 120px;
+  border-radius:12px; object-fit:cover;
+}
+.row-card .meta { flex:1; }
+.row-card .title { font-weight:700; font-size:16px; line-height:1.3; }
+.row-card .sub   { color:#6b7280; font-size:12px; margin-top:2px; }
+.row-card .price { font-weight:700; margin:6px 0; }
+.row-card .actions { display:flex; gap:8px; flex-wrap:wrap; }
+
+@media (max-width:540px){
+  .row-card { align-items:flex-start; }
+  .row-card .thumb { width:96px; height:96px; }
+}
+
