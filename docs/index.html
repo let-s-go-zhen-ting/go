@@ -79,12 +79,23 @@
     const category = document.getElementById('category');
 
     function rerender(){
-      const list = filterProducts({ q: search.value, cat: category.value });
-      renderCards(allGrid, list);
-    }
-    rerender();
-    search.addEventListener('input', rerender);
-    category.addEventListener('change', rerender);
+  let list = filterProducts({ q: search.value, cat: category.value });
+  const f = document.getElementById('filter').value;
+  if (f === 'new') list = list.filter(p => p.isNew);
+  if (f === 'instock') list = list.filter(p => (p.stock ?? 0) > 0);
+
+  const s = document.getElementById('sort').value;
+  if (s === 'price_asc')  list = list.slice().sort((a,b)=> a.price - b.price);
+  if (s === 'price_desc') list = list.slice().sort((a,b)=> b.price - a.price);
+
+  renderCards(allGrid, list);
+}
+rerender();
+search.addEventListener('input', rerender);
+category.addEventListener('change', rerender);
+document.getElementById('sort').addEventListener('change', rerender);
+document.getElementById('filter').addEventListener('change', rerender);
+
 
     // 啟動側拉面板
     setupDrawer();
