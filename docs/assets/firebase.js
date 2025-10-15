@@ -2,8 +2,11 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import {
   getAuth, onAuthStateChanged, signInAnonymously,
-  setPersistence, browserLocalPersistence
+  setPersistence, browserLocalPersistence,
+  signInWithEmailAndPassword,   // ← 加這個
+  signOut                       // ← 和這個
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getStorage } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js"; // 若未使用可刪
 
@@ -32,4 +35,11 @@ export async function ensureSignedInAnon() {
   return new Promise((resolve) =>
     onAuthStateChanged(auth, () => resolve(auth.currentUser))
   );
+}
+export async function adminEmailPasswordSignIn(email, password) {
+  return signInWithEmailAndPassword(auth, email, password);
+}
+
+export function signOutNow() {
+  return signOut(auth);
 }
