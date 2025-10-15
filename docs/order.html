@@ -12,13 +12,15 @@
     <div><a class="btn secondary" href="index.html">回商店</a></div>
   </header>
 
-  <section class="card">
+  <!-- 單筆訂單：基本資訊 -->
+  <section class="card" id="singleCard">
     <div>訂單編號：<strong id="oid">...</strong></div>
     <div>金額：<strong id="amount">...</strong></div>
     <div>付款方式：<strong id="pm">...</strong></div>
     <div>付款狀態：<strong id="ps">...</strong></div>
   </section>
 
+  <!-- 單筆訂單：付款回報（LINE） -->
   <section class="card" id="lineReportBox" style="display:none">
     <h2>付款回報（LINE）</h2>
     <p class="small">請先按「複製回報內容」，再按「打開官方 LINE」貼上並傳送。</p>
@@ -28,44 +30,106 @@
     </div>
   </section>
 
-<script type="module">
-  import { db, auth, ensureSignedInAnon } from "./assets/firebase.js?v=8";
-  import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  <script type="module">
+    import { db, auth, ensureSignedInAnon } from "./assets/firebase.js?v=8";
+    import {
+      doc, getDoc,
+      collection, query, where, orderBy, getDocs
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-  const LINE_ID = '@你的官方LineID'; // 例：@abcd1234
-  function getParam(n){ return new URLSearchParams(location.search).get(n); }
-  const orderId = getParam('id');
-  document.getElementById('oid').textContent = orderId || '';
+    // ===== 參數 & 小工具 =====
+    const params  = new URLSearchParams(location.search);
+    const orderId = params.get('id');
+    const $ = (s)=>document.querySelector(s);
 
-  async function load(){
-    await ensureSignedInAnon();
-    const snap = await getDoc(doc(db, "orders", orderId));
-    if(!snap.exists()){ alert('找不到訂單'); return; }
-    const o = snap.data();
+    const LINE_ID = '@你的官方LineID'; // 例：@abcd1234
+    const singleCard = $('#singleCard');
 
-    document.getElementById('amount').textContent = 'NT$ '+o.amount;
-    document.getElementById('pm').textContent = o.paymentMethod;
-    document.getElementById('ps').textContent = o.paymentStatus;
+    // 動態建立「我的訂單」列表卡（當沒有帶 id 時才顯示）
+    const listWrap = document.createElement('section');
+    listWrap.className = 'card';
+    listWrap.innerHTML = `<h2>我的訂單</h2><div id="list"></div>`;
+    if (!orderId) document.body.insertBefore(listWrap, singleCard);
 
-    if(o.paymentMethod !== 'cod'){
-      const msg = [
-        '【付款回報】',
-        `訂單編號：${orderId}`,
-        `金額：NT$ ${o.amount}`,
-        `付款方式：${o.paymentMethod==='bank_transfer'?'匯款':'無卡存款'}`,
-        '匯款後五碼：_____（或存款日期/時間）',
-        '備註：'
-      ].join('\n');
+    const fmtTime = (ts)=>{
+      if(!ts?.toDate) return '';
+      const d = ts.toDate();
+      return `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    };
+
+    // ===== 載入單筆訂單 =====
+    async function loadSingle(id){
+      const snap = await getDoc(doc(db, "orders", id));
+      if(!snap.exists()){ alert('找不到訂單'); return; }
+      const o = snap.data();
+
+      $('#oid').textContent    = id;
+      $('#amount').textContent = 'NT$ ' + o.amount;
+      $('#pm').textContent     = o.paymentMethod;
+      $('#ps').textContent     = o.paymentStatus;
+
+      // LINE 付款回報（貨到付款不顯示）
       const box = document.getElementById('lineReportBox');
-      box.style.display = 'block';
-      document.getElementById('copyLineMsg').onclick = async ()=>{
-        try{ await navigator.clipboard.writeText(msg); alert('已複製，請貼到 LINE 傳給我們'); }
-        catch{ alert('複製失敗，請手動複製'); }
-      };
-      document.getElementById('openLine').href = `https://line.me/R/ti/p/${encodeURIComponent(LINE_ID)}`;
+      if (o.paymentMethod !== 'cod') {
+        const msg = [
+          '【付款回報】',
+          `訂單編號：${id}`,
+          `金額：NT$ ${o.amount}`,
+          `付款方式：${o.paymentMethod==='bank_transfer'?'匯款':'無卡存款'}`,
+          '匯款後五碼：_____（或存款日期/時間）',
+          '備註：'
+        ].join('\\n');
+        box.style.display = 'block';
+        document.getElementById('copyLineMsg').onclick = async ()=>{
+          try{ await navigator.clipboard.writeText(msg); alert('已複製，請貼到 LINE 傳給我們'); }
+          catch{ alert('複製失敗，請手動複製'); }
+        };
+        document.getElementById('openLine').href = `https://line.me/R/ti/p/${encodeURIComponent(LINE_ID)}`;
+      } else {
+        box.style.display = 'none';
+      }
     }
-  }
-  load();
-</script>
+
+    // ===== 載入清單（本人所有訂單）=====
+    async function loadList(){
+      const q = query(
+        collection(db, "orders"),
+        where("uid","==", auth.currentUser.uid),
+        orderBy("createdAt","desc")
+      );
+      const snaps = await getDocs(q);
+      const out = [];
+      snaps.forEach(s=>{
+        const o = s.data();
+        out.push(`
+          <div class="row" style="justify-content:space-between;align-items:center;border-bottom:1px solid #eee;padding:8px 0">
+            <div>
+              <div><strong>${s.id}</strong></div>
+              <div class="small">金額 NT$ ${o.amount}｜付款：${o.paymentMethod}｜狀態：${o.paymentStatus}｜${fmtTime(o.createdAt)}</div>
+            </div>
+            <div>
+              <a class="btn secondary" href="order.html?id=${encodeURIComponent(s.id)}">查看</a>
+            </div>
+          </div>
+        `);
+      });
+      document.getElementById('list').innerHTML = out.length ? out.join('') : '<div class="small">目前沒有訂單</div>';
+
+      // 若沒有 id，隱藏單筆卡，只顯示列表
+      if(!orderId){
+        singleCard.style.display = 'none';
+        document.getElementById('lineReportBox').style.display = 'none';
+      }
+    }
+
+    // ===== 入口 =====
+    await ensureSignedInAnon(); // 使用 localPersistence，不會無故換 UID
+    if(orderId){
+      $('#oid').textContent = orderId;
+      await loadSingle(orderId);
+    }else{
+      await loadList();
+    }
+  </script>
 </body>
 </html>
