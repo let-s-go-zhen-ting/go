@@ -29,6 +29,11 @@
       <a class="btn secondary" id="openLine" target="_blank">打開官方 LINE</a>
     </div>
   </section>
+  
+  <section class="card" id="adminOnly" style="display:none">
+  <h2>管理員工具</h2>
+  <a class="btn" href="admin.html">開啟後台審單</a>
+</section>
 
   <script type="module">
     import { db, auth, ensureSignedInAnon } from "./assets/firebase.js?v=8";
@@ -36,7 +41,14 @@
       doc, getDoc,
       collection, query, where, orderBy, getDocs
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    //在這兩個 import 後面加 ↓↓↓
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
+    const ADMINS = ["letsgozhenting@gmail.com"]; // 換成你的白名單
+    onAuthStateChanged(auth, (u)=>{
+      const isAdmin = !!u?.email && ADMINS.includes(u.email);
+      document.getElementById('adminOnly').style.display = isAdmin ? 'block' : 'none';
+    });
     // ===== 參數 & 小工具 =====
     const params  = new URLSearchParams(location.search);
     const orderId = params.get('id');
