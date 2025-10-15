@@ -8,6 +8,9 @@ import {
   linkWithCredential,
   signOut
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { db } from './firebase.js?v=6';
+import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
 
 // === 從 Google 試算表載入商品（gviz JSON） ===
 export let PRODUCTS = [];
@@ -138,7 +141,6 @@ export function filterProducts({ q='', cat, origin } = {}) {
 
 
 // === 側拉面板 ===
-// === 側拉面板 ===
 export function setupDrawer(){
   const btn = document.getElementById('avatarBtn');
   const mask = document.getElementById('drawerMask');
@@ -150,26 +152,37 @@ export function setupDrawer(){
 
   const box = document.getElementById('drawerProfile');
 
-  // 先確保匿名登入（有 UID 才能下單）
-  ensureSignedInAnon().then(() => render());
+  ensureSignedInAnon().then(loadAndRender);
 
-  function render(){
+  async function loadAndRender(){
     const u = auth.currentUser;
     const isAnon = !!u?.isAnonymous;
     const uid = u?.uid || 'guest';
     const emailShown = u?.email || (isAnon ? '匿名使用者' : '');
 
+    // 讀暱稱
+    let nickname = '';
+    try {
+      const snap = await getDoc(doc(db, 'users', uid));
+      nickname = snap.exists() ? (snap.data().nickname || '') : '';
+    } catch {}
+
     box.innerHTML = `
       <div class="drawer-header">
-        <div class="avatar">我</div>
+        <div class="avatar">${(nickname || '我').slice(0,1)}</div>
         <div>
-          <div><strong>${emailShown || '未登入'}</strong></div>
+          <div><strong>${nickname || emailShown || '未登入'}</strong></div>
           <div class="small">UID：${uid.slice(0,8)}...</div>
         </div>
         <button id="drawerClose" class="btn secondary" style="margin-left:auto;padding:4px 8px">關閉</button>
       </div>
       <hr>
-      <div class="small" style="margin-bottom:8px">${isAnon ? '目前為匿名狀態，可綁定 Email 以保存訂單' : '已登入'}</div>
+
+      <label>暱稱</label>
+      <input id="nickname" class="input" placeholder="想顯示的名稱" value="${nickname || ''}">
+      <button id="saveProfile" class="btn" style="margin-top:8px">儲存</button>
+
+      <div class="small" style="margin:12px 0">${isAnon ? '目前為匿名狀態，可綁定 Email 以保存訂單' : '已登入'}</div>
 
       ${isAnon ? `
         <label>Email</label>
@@ -181,7 +194,7 @@ export function setupDrawer(){
           <button id="btnLogin" class="btn secondary">用 Email 直接登入</button>
         </div>
       ` : `
-        <div class="row" style="gap:8px;flex-wrap:wrap">
+        <div class="row" style="gap:8px;flex-wrap:wrap;margin-top:8px">
           <a href="order.html" class="btn secondary">我的訂單</a>
           <button id="btnLogout" class="btn secondary">登出</button>
         </div>
@@ -192,6 +205,18 @@ export function setupDrawer(){
 
     document.getElementById('drawerClose')?.addEventListener('click', close);
 
+    // 存暱稱
+    document.getElementById('saveProfile')?.addEventListener('click', async ()=>{
+      const nn = document.getElementById('nickname').value.trim();
+      try{
+        await setDoc(doc(db, 'users', uid), { nickname: nn }, { merge: true });
+        alert('已儲存暱稱');
+        loadAndRender();
+      }catch(e){
+        alert('儲存失敗：' + (e?.message || e));
+      }
+    });
+
     // 匿名 → 綁定 Email
     document.getElementById('btnLink')?.addEventListener('click', async () => {
       const email = document.getElementById('email').value.trim();
@@ -201,7 +226,7 @@ export function setupDrawer(){
         const cred = EmailAuthProvider.credential(email, pw);
         await linkWithCredential(auth.currentUser, cred);
         alert('綁定成功！已升級為 Email 帳號');
-        render();
+        loadAndRender();
       } catch (e) {
         if (e?.code === 'auth/credential-already-in-use') {
           alert('這個 Email 已被使用，請改用「用 Email 直接登入」。');
@@ -217,13 +242,10 @@ export function setupDrawer(){
       const pw    = document.getElementById('pw').value.trim();
       if(!email || pw.length<6){ alert('請輸入 Email 與至少 6 碼密碼'); return; }
       try {
-        try {
-          await signInWithEmailAndPassword(auth, email, pw);
-        } catch {
-          await createUserWithEmailAndPassword(auth, email, pw);
-        }
+        try { await signInWithEmailAndPassword(auth, email, pw); }
+        catch { await createUserWithEmailAndPassword(auth, email, pw); }
         alert('登入完成！');
-        render();
+        loadAndRender();
       } catch(e){
         alert('登入/註冊失敗：' + (e?.message || e));
       }
@@ -234,7 +256,8 @@ export function setupDrawer(){
       await signOut(auth);
       await ensureSignedInAnon();
       alert('已登出');
-      render();
+      loadAndRender();
     });
   }
 }
+
