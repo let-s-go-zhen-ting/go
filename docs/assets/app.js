@@ -1,6 +1,14 @@
 // docs/assets/app.js
 import { auth, ensureSignedInAnon } from './firebase.js?v=6';
 
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  EmailAuthProvider,
+  linkWithCredential,
+  signOut
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
 // === 從 Google 試算表載入商品（gviz JSON） ===
 export let PRODUCTS = [];
 
@@ -74,7 +82,7 @@ const fmt = n => Number(n || 0).toLocaleString('zh-Hant-TW');
 
 // === 渲染卡片（長條樣式 + NEW 在標題後、兩顆按鈕並排）===
 export function renderCards(container, products){
-  const fmt = n => Number(n || 0).toLocaleString('zh-Hant-TW');
+  
 
   container.innerHTML = (products||[]).map(p => `
     <div class="card row-card" data-pid="${p.id}">
@@ -114,17 +122,22 @@ export function renderCards(container, products){
 
 
 // === 搜尋與分類 ===
-export function filterProducts({ q='', cat } = {}) {
+export function filterProducts({ q='', cat, origin } = {}) {
   const kw = q.trim().toLowerCase();
-  const isAll = !cat || cat === 'ALL' || cat === '全部分類';
+  const allCat = !cat || cat === 'ALL' || cat === '全部分類';
+  const allOrigin = !origin || origin === 'ALL';
+
   return PRODUCTS.filter(p => {
-    const okCat = isAll || p.category === cat;
-    const okKw  = !kw || p.title.toLowerCase().includes(kw);
-    return okCat && okKw;
+    const okCat = allCat || p.category === cat;
+    const okOrigin = allOrigin || p.origin === origin;
+    const okKw = !kw || p.title.toLowerCase().includes(kw);
+    return okCat && okOrigin && okKw;
   });
 }
 
 
+
+// === 側拉面板 ===
 // === 側拉面板 ===
 export function setupDrawer(){
   const btn = document.getElementById('avatarBtn');
@@ -136,42 +149,92 @@ export function setupDrawer(){
   mask?.addEventListener('click', close);
 
   const box = document.getElementById('drawerProfile');
-  if (box) {
+
+  // 先確保匿名登入（有 UID 才能下單）
+  ensureSignedInAnon().then(() => render());
+
+  function render(){
+    const u = auth.currentUser;
+    const isAnon = !!u?.isAnonymous;
+    const uid = u?.uid || 'guest';
+    const emailShown = u?.email || (isAnon ? '匿名使用者' : '');
+
     box.innerHTML = `
       <div class="drawer-header">
         <div class="avatar">我</div>
         <div>
-          <div><strong>訪客</strong></div>
-          <div class="small">尚未載入使用者</div>
+          <div><strong>${emailShown || '未登入'}</strong></div>
+          <div class="small">UID：${uid.slice(0,8)}...</div>
         </div>
         <button id="drawerClose" class="btn secondary" style="margin-left:auto;padding:4px 8px">關閉</button>
       </div>
       <hr>
-      <div><a href="order.html" class="btn secondary">我的訂單</a></div>
+      <div class="small" style="margin-bottom:8px">${isAnon ? '目前為匿名狀態，可綁定 Email 以保存訂單' : '已登入'}</div>
+
+      ${isAnon ? `
+        <label>Email</label>
+        <input id="email" class="input" placeholder="example@gmail.com" type="email" autocomplete="email">
+        <label>密碼（至少 6 碼）</label>
+        <input id="pw" class="input" placeholder="******" type="password" autocomplete="new-password">
+        <div class="row" style="margin-top:8px">
+          <button id="btnLink" class="btn">綁定（把匿名升級成 Email）</button>
+          <button id="btnLogin" class="btn secondary">用 Email 直接登入</button>
+        </div>
+      ` : `
+        <div class="row" style="gap:8px;flex-wrap:wrap">
+          <a href="order.html" class="btn secondary">我的訂單</a>
+          <button id="btnLogout" class="btn secondary">登出</button>
+        </div>
+      `}
+
       <div style="margin-top:8px"><a href="admin.html" class="small">（管理員入口）</a></div>
     `;
-    document.getElementById('drawerClose')?.addEventListener('click', close);
-  }
 
-  ensureSignedInAnon().then(() => {
-    const u = auth.currentUser;
-    const uid = u?.uid || 'guest';
-    const email = u?.email || '匿名使用者';
-    if (box) {
-      box.innerHTML = `
-        <div class="drawer-header">
-          <div class="avatar">我</div>
-          <div>
-            <div><strong>${email}</strong></div>
-            <div class="small">UID：${uid.slice(0,8)}...</div>
-          </div>
-          <button id="drawerClose" class="btn secondary" style="margin-left:auto;padding:4px 8px">關閉</button>
-        </div>
-        <hr>
-        <div><a href="order.html" class="btn secondary">我的訂單</a></div>
-        <div style="margin-top:8px"><a href="admin.html" class="small">（管理員入口）</a></div>
-      `;
-      document.getElementById('drawerClose')?.addEventListener('click', close);
-    }
-  }).catch(() => {});
+    document.getElementById('drawerClose')?.addEventListener('click', close);
+
+    // 匿名 → 綁定 Email
+    document.getElementById('btnLink')?.addEventListener('click', async () => {
+      const email = document.getElementById('email').value.trim();
+      const pw    = document.getElementById('pw').value.trim();
+      if(!email || pw.length<6){ alert('請輸入 Email 與至少 6 碼密碼'); return; }
+      try {
+        const cred = EmailAuthProvider.credential(email, pw);
+        await linkWithCredential(auth.currentUser, cred);
+        alert('綁定成功！已升級為 Email 帳號');
+        render();
+      } catch (e) {
+        if (e?.code === 'auth/credential-already-in-use') {
+          alert('這個 Email 已被使用，請改用「用 Email 直接登入」。');
+        } else {
+          alert('綁定失敗：' + (e?.message || e));
+        }
+      }
+    });
+
+    // 登入 / 註冊
+    document.getElementById('btnLogin')?.addEventListener('click', async () => {
+      const email = document.getElementById('email').value.trim();
+      const pw    = document.getElementById('pw').value.trim();
+      if(!email || pw.length<6){ alert('請輸入 Email 與至少 6 碼密碼'); return; }
+      try {
+        try {
+          await signInWithEmailAndPassword(auth, email, pw);
+        } catch {
+          await createUserWithEmailAndPassword(auth, email, pw);
+        }
+        alert('登入完成！');
+        render();
+      } catch(e){
+        alert('登入/註冊失敗：' + (e?.message || e));
+      }
+    });
+
+    // 登出 → 回匿名
+    document.getElementById('btnLogout')?.addEventListener('click', async () => {
+      await signOut(auth);
+      await ensureSignedInAnon();
+      alert('已登出');
+      render();
+    });
+  }
 }
