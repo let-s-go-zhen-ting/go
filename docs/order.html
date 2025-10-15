@@ -94,7 +94,7 @@
           `付款方式：${o.paymentMethod==='bank_transfer'?'匯款':'無卡存款'}`,
           '匯款後五碼：_____（或存款日期/時間）',
           '備註：'
-        ].join('\\n');
+        ].join('\n');
         box.style.display = 'block';
         document.getElementById('copyLineMsg').onclick = async ()=>{
           try{ await navigator.clipboard.writeText(msg); alert('已複製，請貼到 LINE 傳給我們'); }
@@ -140,6 +140,7 @@
 
     // ===== 入口 =====
     await ensureSignedInAnon(); // 使用 localPersistence，不會無故換 UID
+    const uid = auth.currentUser.uid;
     if(orderId){
       $('#oid').textContent = orderId;
       await loadSingle(orderId);
