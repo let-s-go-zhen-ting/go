@@ -108,35 +108,46 @@
 
     // ===== 載入清單（本人所有訂單）=====
     async function loadList(){
-      const q = query(
-        collection(db, "orders"),
-        where("uid","==", auth.currentUser.uid),
-        orderBy("createdAt","desc")
-      );
-      const snaps = await getDocs(q);
-      const out = [];
-      snaps.forEach(s=>{
-        const o = s.data();
-        out.push(`
-          <div class="row" style="justify-content:space-between;align-items:center;border-bottom:1px solid #eee;padding:8px 0">
-            <div>
-              <div><strong>${s.id}</strong></div>
-              <div class="small">金額 NT$ ${o.amount}｜付款：${o.paymentMethod}｜狀態：${o.paymentStatus}｜${fmtTime(o.createdAt)}</div>
-            </div>
-            <div>
-              <a class="btn secondary" href="order.html?id=${encodeURIComponent(s.id)}">查看</a>
-            </div>
-          </div>
-        `);
-      });
-      document.getElementById('list').innerHTML = out.length ? out.join('') : '<div class="small">目前沒有訂單</div>';
+  const uid = auth.currentUser.uid;
+  // 顯示目前使用中的 UID，方便判斷是不是跟訂單上的 uid 不同
+  console.log('Current UID:', uid);
 
-      // 若沒有 id，隱藏單筆卡，只顯示列表
-      if(!orderId){
-        singleCard.style.display = 'none';
-        document.getElementById('lineReportBox').style.display = 'none';
-      }
-    }
+  const base = collection(db, "orders");
+  let snaps;
+
+  // 先用有排序的查詢（需要索引）
+  try {
+    snaps = await getDocs(query(base, where("uid","==", uid), orderBy("createdAt","desc")));
+  } catch (e) {
+    console.warn('沒有索引或查詢失敗，改用無排序查詢。', e);
+    snaps = await getDocs(query(base, where("uid","==", uid))); // 保底：不排序
+  }
+
+  const list = document.getElementById('list');
+  const out = [];
+  snaps.forEach(s=>{
+    const o = s.data();
+    out.push(`
+      <div class="row" style="justify-content:space-between;align-items:center;border-bottom:1px solid #eee;padding:8px 0">
+        <div>
+          <div><strong>${s.id}</strong></div>
+          <div class="small">金額 NT$ ${o.amount||0}｜付款：${o.paymentMethod||'-'}｜狀態：${o.paymentStatus||'-'}｜${o.createdAt?.toDate ? (o.createdAt.toDate().toLocaleString('zh-TW')) : ''}</div>
+        </div>
+        <div>
+          <a class="btn secondary" href="order.html?id=${encodeURIComponent(s.id)}">查看</a>
+        </div>
+      </div>
+    `);
+  });
+
+  list.innerHTML = out.length ? out.join('') :
+    `<div class="small">目前沒有訂單（目前 UID：${uid.slice(0,8)}…）</div>`;
+
+  if(!orderId){
+    document.getElementById('singleCard').style.display = 'none';
+    document.getElementById('lineReportBox').style.display = 'none';
+  }
+}
 
     // ===== 入口 =====
     await ensureSignedInAnon(); // 使用 localPersistence，不會無故換 UID
