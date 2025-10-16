@@ -23,198 +23,220 @@
     <h1>結帳</h1>
     <div><a class="btn secondary" href="index.html">← 回商店</a></div>
   </header>
+  
+  <main>
+    <section class="card">
+      <h2>購物車</h2>
+      <table id="cartTable"><thead><tr><th>品名</th><th>數量</th><th>小計</th></tr></thead><tbody></tbody></table>
+      <div style="text-align:right">總額：<strong id="total">NT$ 0</strong></div>
+    </section>
 
-  <section class="card">
-    <h2>購物車</h2>
-    <table id="cartTable"><thead><tr><th>品名</th><th>數量</th><th>小計</th></tr></thead><tbody></tbody></table>
-    <div style="text-align:right">總額：<strong id="total">NT$ 0</strong></div>
-  </section>
-
-  <section class="card">
-    <h2>收件與付款</h2>
-    <div class="row">
-      <div style="flex:1">
-        <label>收件人姓名</label>
-        <input class="input" id="name" placeholder="王小明">
+    <section class="card">
+      <h2>收件與付款</h2>
+      <div class="row">
+        <div style="flex:1">
+          <label>收件人姓名</label>
+          <input class="input" id="name" placeholder="王小明">
+        </div>
+        <div style="flex:1">
+          <label>電話</label>
+          <input class="input" id="phone" placeholder="0912345678" inputmode="numeric" pattern="[0-9]*" maxlength="10">
+        </div>
       </div>
-      <div style="flex:1">
-        <label>電話</label>
-        <input class="input" id="phone" placeholder="0912345678" inputmode="numeric" pattern="[0-9]*" maxlength="10">
+
+      <label>取貨方式</label>
+      <div class="row">
+        <label><input type="radio" name="ship" value="seven" checked> 7-ELEVEN 取貨</label>
+        <label><input type="radio" name="ship" value="meetup"> 面交（沙鹿/大甲/豐原/后里）</label>
       </div>
-    </div>
 
-    <label>取貨方式</label>
-    <div class="row">
-      <label><input type="radio" name="ship" value="seven" checked> 7-ELEVEN 取貨</label>
-      <label><input type="radio" name="ship" value="meetup"> 面交（沙鹿/大甲/豐原/后里）</label>
-    </div>
+      <div id="sevenBox">
+        <label>7-ELEVEN 門市名稱</label>
+        <input class="input" id="sevenStoreName" placeholder="例如：台中中清門市">
+        <label>門市代碼（可不填）</label>
+        <input class="input" id="sevenStoreId" placeholder="可留白">
+      </div>
 
-    <div id="sevenBox">
-      <label>7-ELEVEN 門市名稱</label>
-      <input class="input" id="sevenStoreName" placeholder="例如：台中中清門市">
-      <label>門市代碼（可不填）</label>
-      <input class="input" id="sevenStoreId" placeholder="可留白">
-    </div>
+      <div id="meetupBox" style="display:none">
+        <label>面交地點</label>
+        <select class="input" id="meetupPlace">
+          <option value="">請選擇</option>
+          <option>沙鹿</option><option>大甲</option><option>豐原</option><option>后里</option>
+        </select>
+        <label>面交時間（可留白，後續會用官方Line聯繫您）</label>
+        <input class="input" id="meetupTime" placeholder="例如：週六 下午 3 點">
+      </div>
 
-    <div id="meetupBox" style="display:none">
-      <label>面交地點</label>
-      <select class="input" id="meetupPlace">
-        <option value="">請選擇</option>
-        <option>沙鹿</option><option>大甲</option><option>豐原</option><option>后里</option>
-      </select>
-      <label>面交時間（可留白，後續會用官方Line聯繫您）</label>
-      <input class="input" id="meetupTime" placeholder="例如：週六 下午 3 點">
-    </div>
+      <label>付款方式</label>
+        <div class="row">
+        <label><input type="radio" name="pm" value="bank_transfer" checked> 匯款</label>
+        <label><input type="radio" name="pm" value="cardless"> 無卡存款</label>
+        <label><input type="radio" name="pm" value="cod"> 貨到付款</label>
+      </div>
 
-    <label>付款方式</label>
-    <div class="row">
-      <label><input type="radio" name="pm" value="bank_transfer" checked> 匯款</label>
-      <label><input type="radio" name="pm" value="cardless"> 無卡存款</label>
-      <label><input type="radio" name="pm" value="cod"> 貨到付款</label>
-    </div>
+      <div class="small">匯款/無卡：下單後到LINE回報；面交時現場付款也可（可在備註說明）。</div>
+      <div style="margin-top:12px"><button class="btn" id="placeOrderBtn">送出訂單</button></div>
+    </section>
 
-    <div class="small">匯款/無卡：下單後到LINE回報；面交時現場付款也可（可在備註說明）。</div>
-    <div style="margin-top:12px"><button class="btn" id="placeOrderBtn">送出訂單</button></div>
-  </section>
+    <section class="card">
+      <h2>匯款資訊（可於訂單頁再看到）</h2>
+      <div class="small">銀行代碼/帳號/戶名請自行改在前端或改成從 Firestore 讀取。</div>
+      <div>銀行代碼：<strong>700</strong></div>
+      <div>帳號：<strong>0123456789</strong></div>
+      <div>戶名：<strong>L&欸嘍</strong></div>
+    </section>
 
-  <section class="card">
-    <h2>匯款資訊（可於訂單頁再看到）</h2>
-    <div class="small">銀行代碼/帳號/戶名請自行改在前端或改成從 Firestore 讀取。</div>
-    <div>銀行代碼：<strong>700</strong></div>
-    <div>帳號：<strong>0123456789</strong></div>
-    <div>戶名：<strong>L&欸嘍</strong></div>
-  </section>
+  <script type="module">
+    import { app, db, auth, ensureSignedInAnon } from "./assets/firebase.js?v=8";
+    import {
+      collection, doc, setDoc, runTransaction, serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-<script type="module">
-  import { app, db, auth, ensureSignedInAnon } from "./assets/firebase.js?v=8";
-  import {
-    collection, doc, setDoc, runTransaction, serverTimestamp
-  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    function getCart(){ return JSON.parse(localStorage.getItem('cart')||'[]'); }
 
-  function getCart(){ return JSON.parse(localStorage.getItem('cart')||'[]'); }
-
-  function renderCart(){
-    const cart = getCart();
-    const body = document.querySelector('#cartTable tbody');
-    if (!cart.length) {
-      body.innerHTML = `<tr><td colspan="3">購物車是空的，回<a href="index.html">首頁</a>挑選商品吧！</td></tr>`;
-      document.getElementById('total').textContent = 'NT$ 0';
-      return { cart, total: 0 };
-    }
-    body.innerHTML = cart.map(i=>`<tr><td>${i.title}</td><td>${i.qty}</td><td>NT$ ${i.price*i.qty}</td></tr>`).join("");
-    const total = cart.reduce((s,i)=>s+i.price*i.qty,0);
-    document.getElementById('total').textContent = 'NT$ '+total;
-    return { cart, total };
-  }
-  renderCart();
-
-  document.getElementById('phone').addEventListener('input', (e) => {
-    e.target.value = e.target.value.replace(/\D/g, '').slice(0, 10);
-  });
-
-  const sevenBox = document.getElementById('sevenBox');
-  const meetupBox = document.getElementById('meetupBox');
-  document.querySelectorAll('input[name="ship"]').forEach(r=>{
-    r.addEventListener('change', ()=>{
-      const val = document.querySelector('input[name="ship"]:checked').value;
-      sevenBox.style.display = (val==='seven') ? 'block' : 'none';
-      meetupBox.style.display = (val==='meetup') ? 'block' : 'none';
-    });
-  });
-
-  document.getElementById('placeOrderBtn').addEventListener('click', async () => {
-    let cart = getCart();
-    if(cart.length===0){ alert('購物車是空的'); return; }
-
-    const name = document.getElementById('name').value.trim();
-    const phone = document.getElementById('phone').value.trim();
-    if(!name){ alert('請輸入收件人姓名'); return; }
-    if(!/^\d{10}$/.test(phone)){ alert('電話請輸入 10 碼數字（例如 0912345678）'); return; }
-
-    const ship = document.querySelector('input[name="ship"]:checked').value;
-
-    let deliveryMethod, deliveryDetails;
-    if (ship === 'seven') {
-      const storeName = document.getElementById('sevenStoreName').value.trim();
-      const storeId = document.getElementById('sevenStoreId').value.trim();
-      if(!storeName){ alert('請填 7-ELEVEN 門市名稱'); return; }
-      deliveryMethod = 'seven';
-      deliveryDetails = { storeName, storeId };
-    } else {
-      const place = document.getElementById('meetupPlace').value;
-      const time = document.getElementById('meetupTime').value.trim();
-      if(!place){ alert('請選擇面交地點'); return; }
-      deliveryMethod = 'meetup';
-      deliveryDetails = { place, time };
-    }
-
-    const pm = document.querySelector('input[name="pm"]:checked').value;
-
-    await ensureSignedInAnon();
-    const uid = auth.currentUser.uid;
-
-    const order = {
-      uid,
-      items: cart.map(i=>({ productId:i.id, title:i.title, qty:i.qty, priceSnapshot:i.price })),
-      amount: cart.reduce((s,i)=>s+i.price*i.qty,0),
-      paymentMethod: pm,
-      paymentStatus: "pending",
-      shipmentStatus: "none",
-      receiver: { name, phone },
-      deliveryMethod,
-      deliveryDetails,
-
-       // ⬇️ 這段就是新增的進度欄位
-      progress: {
-        awaitPay: pm !== 'cod',   // 貨到付款不用付款，其他一律待付款
-        toShip:   false,          // 待發貨（之後由你/後台更新）
-        inbound:  false,          // 待運回
-        toSend:   false,          // 待寄出
-        pickup:   false,          // 待取貨（7-11 才會用到，先預設 false）
-        meetup:   false           // 待面交（面交才會用到，先預設 false）
-      },
-      
-      createdAt: serverTimestamp(),
-      paymentReport: {},
-      notesFromBuyer: ""
-    };
-
-    // 自訂有序 ID：YYYYMMDD-0001
-    const t = new Date();
-    const ymd = `${t.getFullYear()}${String(t.getMonth()+1).padStart(2,'0')}${String(t.getDate()).padStart(2,'0')}`;
-    const seqRef = doc(db, 'sequences', ymd);
-    const nextNo = await runTransaction(db, async (trx) => {
-      const snap = await trx.get(seqRef);
-      const current = snap.exists() ? (snap.data().n || 0) : 0;
-      const next = current + 1;
-      trx.set(seqRef, { n: next, updatedAt: serverTimestamp() }, { merge: true });
-      return next;
-    });
-    const orderId = `${ymd}-${String(nextNo).padStart(4,'0')}`;
-
-    // 建立訂單（用自訂 ID）
-    await setDoc(doc(collection(db, "orders"), orderId), order);
-
-    // 同步到試算表（Apps Script /exec）
-    const payload = JSON.stringify({ token: 'LAL_SEC_1', id: orderId, ...order });
-    try {
-      const ok = navigator.sendBeacon(
-        'https://script.google.com/macros/s/AKfycbxm1PCyw3wVPp7ZrWyFIwfavFN3CXGSOnIWYVEjr1zbCPWyWquRMqg9PSWr2KiZnkiy/exec',
-        new Blob([payload], { type: 'text/plain' })
-      );
-      if (!ok) {
-        fetch('https://script.google.com/macros/s/AKfycbxm1PCyw3wVPp7ZrWyFIwfavFN3CXGSOnIWYVEjr1zbCPWyWquRMqg9PSWr2KiZnkiy/exec', {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain' },
-          body: payload
-        }).catch(()=>{});
+    function renderCart(){
+      const cart = getCart();
+      const body = document.querySelector('#cartTable tbody');
+      if (!cart.length) {
+        body.innerHTML = `<tr><td colspan="3">購物車是空的，回<a href="index.html">首頁</a>挑選商品吧！</td></tr>`;
+        document.getElementById('total').textContent = 'NT$ 0';
+        return { cart, total: 0 };
       }
-    } catch (_) {}
+      body.innerHTML = cart.map(i=>`<tr><td>${i.title}</td><td>${i.qty}</td><td>NT$ ${i.price*i.qty}</td></tr>`).join("");
+      const total = cart.reduce((s,i)=>s+i.price*i.qty,0);
+      document.getElementById('total').textContent = 'NT$ '+total;
+      return { cart, total };
+    }
+    renderCart();
 
-    localStorage.removeItem('cart');
-    setTimeout(()=>{ window.location.href = `order.html?id=${orderId}`; }, 500);
-    return;
-  });
-</script>
+    document.getElementById('phone').addEventListener('input', (e) => {
+      e.target.value = e.target.value.replace(/\D/g, '').slice(0, 10);
+    });
+
+    const sevenBox = document.getElementById('sevenBox');
+    const meetupBox = document.getElementById('meetupBox');
+    document.querySelectorAll('input[name="ship"]').forEach(r=>{
+      r.addEventListener('change', ()=>{
+        const val = document.querySelector('input[name="ship"]:checked').value;
+        sevenBox.style.display = (val==='seven') ? 'block' : 'none';
+        meetupBox.style.display = (val==='meetup') ? 'block' : 'none';
+      });
+    });
+
+    document.getElementById('placeOrderBtn').addEventListener('click', async () => {
+      let cart = getCart();
+      if(cart.length===0){ alert('購物車是空的'); return; }
+
+      const name = document.getElementById('name').value.trim();
+      const phone = document.getElementById('phone').value.trim();
+      if(!name){ alert('請輸入收件人姓名'); return; }
+      if(!/^\d{10}$/.test(phone)){ alert('電話請輸入 10 碼數字（例如 0912345678）'); return; }
+
+      const ship = document.querySelector('input[name="ship"]:checked').value;
+
+      let deliveryMethod, deliveryDetails;
+      if (ship === 'seven') {
+        const storeName = document.getElementById('sevenStoreName').value.trim();
+        const storeId = document.getElementById('sevenStoreId').value.trim();
+        if(!storeName){ alert('請填 7-ELEVEN 門市名稱'); return; }
+        deliveryMethod = 'seven';
+        deliveryDetails = { storeName, storeId };
+      } else {
+        const place = document.getElementById('meetupPlace').value;
+        const time = document.getElementById('meetupTime').value.trim();
+        if(!place){ alert('請選擇面交地點'); return; }
+        deliveryMethod = 'meetup';
+        deliveryDetails = { place, time };
+      }
+
+      const pm = document.querySelector('input[name="pm"]:checked').value;
+
+      await ensureSignedInAnon();
+      const uid = auth.currentUser.uid;
+
+      const order = {
+        uid,
+        items: cart.map(i=>({ productId:i.id, title:i.title, qty:i.qty, priceSnapshot:i.price })),
+        amount: cart.reduce((s,i)=>s+i.price*i.qty,0),
+        paymentMethod: pm,
+        paymentStatus: "pending",
+        shipmentStatus: "none",
+        receiver: { name, phone },
+        deliveryMethod,
+        deliveryDetails,
+
+         // ⬇️ 這段就是新增的進度欄位
+        progress: {
+          awaitPay: pm !== 'cod',   // 貨到付款不用付款，其他一律待付款
+          toShip:   false,          // 待發貨（之後由你/後台更新）
+          inbound:  false,          // 待運回
+          toSend:   false,          // 待寄出
+          pickup:   false,          // 待取貨（7-11 才會用到，先預設 false）
+          meetup:   false           // 待面交（面交才會用到，先預設 false）
+        },
+      
+        createdAt: serverTimestamp(),
+        paymentReport: {},
+        notesFromBuyer: ""
+      };
+
+      // 自訂有序 ID：YYYYMMDD-0001
+      const t = new Date();
+      const ymd = `${t.getFullYear()}${String(t.getMonth()+1).padStart(2,'0')}${String(t.getDate()).padStart(2,'0')}`;
+      const seqRef = doc(db, 'sequences', ymd);
+      const nextNo = await runTransaction(db, async (trx) => {
+        const snap = await trx.get(seqRef);
+        const current = snap.exists() ? (snap.data().n || 0) : 0;
+        const next = current + 1;
+        trx.set(seqRef, { n: next, updatedAt: serverTimestamp() }, { merge: true });
+        return next;
+      });
+      const orderId = `${ymd}-${String(nextNo).padStart(4,'0')}`;
+
+      // 建立訂單（用自訂 ID）
+      await setDoc(doc(collection(db, "orders"), orderId), order);
+
+      // 同步到試算表（Apps Script /exec）
+      const payload = JSON.stringify({ token: 'LAL_SEC_1', id: orderId, ...order });
+      try {
+        const ok = navigator.sendBeacon(
+          'https://script.google.com/macros/s/AKfycbxm1PCyw3wVPp7ZrWyFIwfavFN3CXGSOnIWYVEjr1zbCPWyWquRMqg9PSWr2KiZnkiy/exec',
+          new Blob([payload], { type: 'text/plain' })
+        );
+        if (!ok) {
+          fetch('https://script.google.com/macros/s/AKfycbxm1PCyw3wVPp7ZrWyFIwfavFN3CXGSOnIWYVEjr1zbCPWyWquRMqg9PSWr2KiZnkiy/exec', {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain' },
+            body: payload
+          }).catch(()=>{});
+        }
+      } catch (_) {}
+
+      localStorage.removeItem('cart');
+      setTimeout(()=>{ window.location.href = `order.html?id=${orderId}`; }, 500);
+      return;
+    });
+  </script>
+  </main>
+
+  <footer class="site-footer">
+  <div class="row" style="justify-content:space-between">
+    <div>
+      <strong>客服資訊</strong><br>
+      Email：<a href="mailto:letsgozhenting@gmail.com">letsgozhenting@gmail.com</a><br>
+      LINE：<a href="https://lin.ee/305cGr5" target="_blank" rel="noopener">https://lin.ee/305cGr5</a><br>
+      FB：<a href="https://www.facebook.com/share/17UF5BshaN/" target="_blank" rel="noopener">Facebook</a><br>
+      IG：<a href="https://www.instagram.com/letsgo.zhen.ting?igsh=YmM3NTU2aHllMWl2" target="_blank" rel="noopener">@letsgo.zhen.ting</a>
+    </div>
+    <nav>
+      <a href="privacy.html">隱私權條款</a> <span class="sep">｜</span>
+      <a href="consumer-rights.html">消費者權益</a> <span class="sep">｜</span>
+      <a href="tos.html">會員服務條款</a> <span class="sep">｜</span>
+      <a href="returns.html">退換貨方式</a>
+    </nav>
+  </div>
+  <div style="margin-top:8px;color:#9ca3af">© 2025 啦此購</div>
+</footer>
+
 </body>
 </html>
