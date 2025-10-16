@@ -20,35 +20,33 @@
   </div>
   <!-- 頂部：左上頭貼 → 開啟側拉；右側是購物車 -->
   <header class="header-bar">
-  <button id="avatarBtn" class="avatar" aria-label="開啟個人選單">我</button>
+  <!-- 左：品牌 -->
+  <a href="index.html" class="corner-brand" aria-label="首頁">
+    <img src="favicon.png" alt="logo">
+    <div>
+      <div class="brand-zh">啦此購</div>
+      <div class="brand-en">Let's Go！！！</div>
+    </div>
+  </a>
 
-  <input id="search" class="search flex1" placeholder="搜尋商品名稱…（例如 手幅）">
-
-  <!-- 下拉 1：分類 -->
-  <select id="origin" class="select">
-    <option value="ALL">韓團/中國</option>
-    <option value="韓團">韓團</option>
-    <option value="中國">中國</option>
+  <!-- 中：搜尋 + 三個下拉 -->
+  <input id="search" class="search flex1" placeholder="搜尋商品…">
+  <select id="origin"   class="select">
+    <option value="ALL">韓團/中國</option><option>韓團</option><option>中國</option>
   </select>
-
-  <!-- 下拉 2：排序 -->
   <select id="category" class="select">
-    <option value="default">全部類型</option>
-    <option value="演唱會">演唱會</option>
-    <option value="回憶錄">回憶錄</option>
+    <option value="default">全部類型</option><option>演唱會</option><option>回憶錄</option>
+  </select>
+  <select id="filter"   class="select">
+    <option value="all">全部商品</option><option value="new">只看新上</option><option value="instock">只看有庫存</option>
   </select>
 
-  <!-- 下拉 3：篩選 -->
-  <select id="filter" class="select">
-    <option value="all">全部商品</option>
-    <option value="new">只看新上</option>
-    <option value="instock">只看有庫存</option>
-  </select>
-
+  <!-- 右：購物車 + 頭貼 -->
   <div class="cart-group">
     <a href="checkout.html" class="btn secondary">購物車/結帳</a>
     <span class="badge" id="cartCount">0</span>
   </div>
+  <button id="avatarBtn" class="avatar" aria-label="開啟個人選單">我</button>
 </header>
 
 <main>
