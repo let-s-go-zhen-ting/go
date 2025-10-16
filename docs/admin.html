@@ -42,92 +42,104 @@
   </section>
 
   <script type="module">
-    import { auth, adminEmailPasswordSignIn, signOutNow, db } from "./assets/firebase.js?v=6";
-    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { collection, query, where, orderBy, getDocs, doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { auth, db, isAdminUser } from "./assets/firebase.js?v=6";
+  import { onAuthStateChanged, signInWithEmailAndPassword, signOut } 
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { collection, query, where, orderBy, getDocs, doc, updateDoc, serverTimestamp }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-    const $ = (id)=>document.getElementById(id);
-    const loginCard = $('loginCard');
-    const ordersCard = $('ordersCard');
-    const ordersDiv = $('orders');
+  const $ = id => document.getElementById(id);
+  const loginCard  = $('loginCard');
+  const ordersCard = $('ordersCard');
+  const ordersDiv  = $('orders');
 
-    $('loginBtn').addEventListener('click', async ()=>{
-      const email = $('email').value.trim();
-      const pw = $('password').value;
-      if(!email || pw.length<6){ alert('請填 Email 與至少 6 碼密碼'); return; }
-      try{
-        await adminEmailPasswordSignIn(email, pw);
-      }catch(e){
-        alert('登入失敗：' + (e?.message||e));
-        console.error(e);
+  // 登入按鈕：先登入，再檢查是否管理員；不是就立刻登出並提示
+  $('loginBtn')?.addEventListener('click', async ()=>{
+    const email = $('email').value.trim();
+    const pw    = $('password').value.trim();
+    if(!email || pw.length < 6){ alert('請填 Email 與至少 6 碼密碼'); return; }
+    try{
+      await signInWithEmailAndPassword(auth, email, pw);
+      if(!isAdminUser(auth.currentUser)){
+        await signOut(auth);
+        alert('非管理員帳號，已拒絕存取');
+        location.href = 'index.html';
       }
-    });
-
-    $('signOutBtn').addEventListener('click', ()=>signOutNow());
-
-    onAuthStateChanged(auth, u=>{
-      if(u && u.email){
-        loginCard.style.display = 'none';
-        ordersCard.style.display = 'block';
-        load();
-      }else{
-        loginCard.style.display = 'block';
-        ordersCard.style.display = 'none';
-      }
-    });
-
-    async function load(){
-      const q = query(
-        collection(db, "orders"),
-        where("paymentStatus","==","proof_submitted"),
-        orderBy("createdAt","desc")
-      );
-      const snaps = await getDocs(q);
-
-      ordersDiv.innerHTML = "";
-      snaps.forEach(s=>{
-        const o = s.data();
-        const el = document.createElement('div');
-        el.className = 'card';
-        el.innerHTML = `
-          <div><strong>訂單 ${s.id}</strong>｜NT$ ${o.amount}</div>
-          <div>付款：${o.paymentMethod}｜狀態：${o.paymentStatus}</div>
-          <div>收件人：${o?.receiver?.name || ''}｜${o?.receiver?.phone || ''}</div>
-          <div>備註（買家）：${o?.notesFromBuyer || ''}</div>
-          <div>憑證：${(o.proofs||[]).map(p=>`<a target="_blank" href="${p.url}">查看</a>`).join('、') || '—'}</div>
-          <div style="margin-top:8px" class="row">
-            <button class="btn" data-action="paid" data-id="${s.id}">標記為已付款</button>
-            <button class="btn secondary" data-action="fail" data-id="${s.id}">退回</button>
-          </div>
-        `;
-        ordersDiv.appendChild(el);
-      });
-
-      // 事件代理（避免重複綁定，先移除再綁）
-      ordersDiv.onclick = async (e)=>{
-        const btn = e.target.closest('button[data-action]');
-        if(!btn) return;
-        const id = btn.getAttribute('data-id');
-        const action = btn.getAttribute('data-action');
-
-        if(action==='paid'){
-          await updateDoc(doc(db, "orders", id), {
-            paymentStatus: "paid",
-            adminMemo: "已核對款項",
-            paidAt: serverTimestamp()
-          });
-          alert('已標記為已付款');
-        }else if(action==='fail'){
-          const reason = prompt('退回原因：','金額不符/帳號不符…') || '';
-          await updateDoc(doc(db, "orders", id), {
-            paymentStatus: "failed",
-            adminMemo: reason
-          });
-          alert('已退回');
-        }
-        load();
-      };
+      // 是管理員的話，onAuthStateChanged 會自動進入 load()
+    }catch(e){
+      alert('登入失敗：' + (e?.message || e));
     }
-  </script>
-</body>
-</html>
+  });
+
+  // 登出
+  $('signOutBtn')?.addEventListener('click', async ()=>{ await signOut(auth); });
+
+  // 監聽登入狀態：只有管理員才顯示訂單清單；否則顯示登入或導回
+  onAuthStateChanged(auth, async (u)=>{
+    if (!u) {
+      loginCard.style.display = 'block';
+      ordersCard.style.display = 'none';
+      return;
+    }
+    if (!isAdminUser(u)) {
+      // 已登入但不是管理員 → 立即導回或顯示無權限
+      loginCard.style.display = 'block';
+      ordersCard.style.display = 'none';
+      alert('無權限存取此頁');
+      location.href = 'index.html';
+      return;
+    }
+    // 是管理員 → 顯示清單
+    loginCard.style.display = 'none';
+    ordersCard.style.display = 'block';
+    await load(); // 你的載入訂單函式（維持原本）
+  });
+
+  async function load(){
+    const q = query(collection(db, "orders"),
+      where("paymentStatus","==","proof_submitted"),
+      orderBy("createdAt","desc"));
+    const snaps = await getDocs(q);
+    ordersDiv.innerHTML = "";
+    snaps.forEach(s=>{
+      const o = s.data();
+      const el = document.createElement('div');
+      el.className = 'card';
+      el.innerHTML = `
+        <div><strong>訂單 ${s.id}</strong>｜NT$ ${o.amount}</div>
+        <div>付款：${o.paymentMethod}｜狀態：${o.paymentStatus}</div>
+        <div>收件人：${o?.receiver?.name || ''}｜${o?.receiver?.phone || ''}</div>
+        <div>備註（買家）：${o?.notesFromBuyer || ''}</div>
+        <div>憑證：${(o.proofs||[]).map(p=>`<a target="_blank" href="${p.url}">查看</a>`).join('、') || '—'}</div>
+        <div style="margin-top:8px" class="row">
+          <button class="btn" data-action="paid" data-id="${s.id}">標記為已付款</button>
+          <button class="btn secondary" data-action="fail" data-id="${s.id}">退回</button>
+        </div>
+      `;
+      ordersDiv.appendChild(el);
+    });
+
+    ordersDiv.onclick = async (e)=>{
+      const btn = e.target.closest('button[data-action]');
+      if(!btn) return;
+      const id = btn.getAttribute('data-id');
+      const action = btn.getAttribute('data-action');
+      if(action==='paid'){
+        await updateDoc(doc(db, "orders", id), {
+          paymentStatus: "paid",
+          adminMemo: "已核對款項",
+          paidAt: serverTimestamp()
+        });
+        alert('已標記為已付款');
+      }else if(action==='fail'){
+        const reason = prompt('退回原因：','金額不符/帳號不符…') || '';
+        await updateDoc(doc(db, "orders", id), {
+          paymentStatus: "failed",
+          adminMemo: reason
+        });
+        alert('已退回');
+      }
+      await load();
+    };
+  }
+</script>
