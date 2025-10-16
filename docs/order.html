@@ -77,7 +77,8 @@
     collection, query, where, orderBy, getDocs
   } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-
+  import { setupDrawer } from "./assets/app.js?v=8";
+    
   const ADMINS = ["letsgozhenting@gmail.com"];
   onAuthStateChanged(auth, (u)=>{
     const isAdmin = !!u?.email && ADMINS.includes(u.email);
@@ -190,6 +191,10 @@
   }else{
     await loadList();
   }
+    
+  const cart = JSON.parse(localStorage.getItem('cart')||'[]');
+  const el = document.getElementById('cartCount'); if(el) el.textContent = cart.reduce((s,i)=>s+i.qty,0);
+  setupDrawer();
 </script>
 
   </main>
