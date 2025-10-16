@@ -92,3 +92,29 @@ main{ flex:1 }
 .site-footer a{ color:#111; text-decoration:none }
 .site-footer a:hover{ text-decoration:underline }
 .site-footer .sep{ color:#9ca3af }
+
+/* 固定頂部的一列，與頁面同寬置中 */
+.header-bar{
+  position: fixed; top: 0; left: 50%;
+  transform: translateX(-50%);
+  width: min(880px, 100% - 32px);
+  z-index: 100;
+  display:flex; align-items:center; gap:12px;
+  padding:10px 12px; background:#fff; border-bottom:1px solid #e5e7eb;
+  white-space: nowrap;        /* 一行顯示 */
+}
+body{ padding-top: 64px; }    /* 讓內容不被蓋住 */
+
+/* 讓搜尋欄可伸縮，其餘維持固定寬度 */
+.search.flex1{ flex:1 1 280px; min-width:160px; }
+.header-bar .select{ min-width:120px; }
+.cart-group{ margin-left:auto; display:flex; align-items:center; gap:6px; }
+.corner-brand{ display:flex; align-items:center; gap:8px; text-decoration:none; color:inherit; }
+.corner-brand img{ width:32px; height:32px; border-radius:8px; }
+.brand-zh{ font-weight:700; line-height:1; }
+.brand-en{ font-size:12px; color:#6b7280; line-height:1; }
+
+/* 真的太小的螢幕：允許橫向滾動避免自動換行 */
+@media (max-width: 600px){
+  .header-bar{ overflow-x:auto; }
+}
