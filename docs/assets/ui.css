@@ -122,3 +122,4 @@ main{ flex:1 }
 /* 若頂列也設很高，保持它低於抽屜 */
 .header-bar{ z-index: 1000 !important; }
 
+.badge.preorder{ border-color:#ef4444; color:#ef4444; }
