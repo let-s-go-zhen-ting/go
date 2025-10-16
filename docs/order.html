@@ -11,10 +11,33 @@
 
 </head>
 <body>
-  <header>
-    <h1>訂單狀態</h1>
-    <div><a class="btn secondary" href="index.html">回商店</a></div>
-  </header>
+  <header class="header-bar">
+  <!-- 中間只有標題；留一個彈性空間把右側頂住 -->
+  <h1 style="margin:0;font-size:20px">我的訂單</h1>
+  <div style="flex:1"></div>
+
+  <!-- 右側：品牌 + 購物車 + 頭貼 -->
+  <div class="cart-group">
+    <a href="index.html" class="corner-brand" aria-label="首頁" style="text-decoration:none;color:inherit;display:flex;align-items:center;gap:8px;">
+      <img src="favicon.png" alt="logo" style="width:28px;height:28px;border-radius:6px">
+      <div>
+        <div class="brand-zh" style="font-weight:700;line-height:1">啦此購</div>
+        <div class="brand-en" style="font-size:12px;color:#6b7280;line-height:1">Let's Go！！！</div>
+      </div>
+    </a>
+
+    <a href="checkout.html" class="btn secondary">購物車/結帳</a>
+    <span class="badge" id="cartCount">0</span>
+  </div>
+  <button id="avatarBtn" class="avatar" aria-label="開啟個人選單">我</button>
+</header>
+
+<!-- 右側抽屜（和首頁一致，放在 body 最後也可以）-->
+<div id="drawerMask"></div>
+<aside id="drawer">
+  <div id="drawerProfile"></div>
+</aside>
+
 
   <main>
   <!-- 單筆訂單：基本資訊 -->
