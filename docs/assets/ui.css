@@ -107,7 +107,7 @@ main{ flex:1 }
 .header-bar select#origin.select,
 .header-bar select#category.select,
 .header-bar select#filter.select {
-  width:70px;
-  min-width:70px;
+  width:110px;
+  min-width:110px;
 }
 
