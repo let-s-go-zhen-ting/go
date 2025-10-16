@@ -22,7 +22,9 @@
     <div>金額：<strong id="amount">...</strong></div>
     <div>付款方式：<strong id="pm">...</strong></div>
     <div>付款狀態：<strong id="ps">...</strong></div>
+    <div>進度：<strong id="stage">待付款</strong></div>  <!-- 新增 -->
   </section>
+
 
   <!-- 單筆訂單：付款回報（LINE） -->
   <section class="card" id="lineReportBox" style="display:none">
@@ -83,6 +85,7 @@
       $('#amount').textContent = 'NT$ ' + o.amount;
       $('#pm').textContent     = o.paymentMethod;
       $('#ps').textContent     = o.paymentStatus;
+      $('#stage').textContent  = o.orderStatus || '待付款'; // 新增
 
       // LINE 付款回報（貨到付款不顯示）
       const box = document.getElementById('lineReportBox');
@@ -131,7 +134,12 @@
       <div class="row" style="justify-content:space-between;align-items:center;border-bottom:1px solid #eee;padding:8px 0">
         <div>
           <div><strong>${s.id}</strong></div>
-          <div class="small">金額 NT$ ${o.amount||0}｜付款：${o.paymentMethod||'-'}｜狀態：${o.paymentStatus||'-'}｜${o.createdAt?.toDate ? (o.createdAt.toDate().toLocaleString('zh-TW')) : ''}</div>
+          <div class="small">
+        金額 NT$ ${o.amount||0}｜付款：${o.paymentMethod||'-'}
+        ｜狀態：${o.paymentStatus||'-'}
+        ｜進度：${o.orderStatus||'待付款'}        
+        ｜${o.createdAt?.toDate ? (o.createdAt.toDate().toLocaleString('zh-TW')) : ''}
+      </div>
         </div>
         <div>
           <a class="btn secondary" href="order.html?id=${encodeURIComponent(s.id)}">查看</a>
