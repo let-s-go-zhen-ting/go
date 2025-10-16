@@ -96,3 +96,20 @@ hr { border:0; border-top:1px solid #eee; margin:12px 0 }
 .corner-brand img{ width:24px; height:24px; border-radius:6px }
 .corner-brand .brand-zh{ font-weight:700 }
 .corner-brand .brand-en{ font-size:12px; color:#6b7280; line-height:1 }
+
+/* Sticky footer */
+html, body { height: 100%; }
+body { display:flex; flex-direction:column; }
+main { flex:1; }              /* 讓內容把高度撐開 */
+.site-footer {
+  border-top:1px solid #eee;
+  margin-top:24px;
+  padding:16px;
+  font-size:14px;
+  color:#4b5563;
+  background:#fafafa;
+}
+.site-footer .row { display:flex; gap:16px; flex-wrap:wrap; align-items:center; }
+.site-footer a { color:#111; text-decoration:none; }
+.site-footer a:hover { text-decoration:underline; }
+.site-footer .sep { color:#9ca3af; }
