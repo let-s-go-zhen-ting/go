@@ -43,3 +43,7 @@ export async function adminEmailPasswordSignIn(email, password) {
 export function signOutNow() {
   return signOut(auth);
 }
+
+// 管理員白名單（可放多個）
+export const ADMINS = ["letsgozhenting@gmail.com"];
+export function isAdminUser(u){ return !!u?.email && ADMINS.includes(u.email); }
