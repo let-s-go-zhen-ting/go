@@ -48,14 +48,6 @@ body{ padding-top: 64px; } /* 若頂欄高度改了，記得同步調整 */
 /* 搜尋（中，可伸縮） */
 .search.flex1{ flex:1 1 280px; min-width:160px }
 
-/* 三個下拉（縮窄） */
-.header-bar .select{
-  min-width:0; width:110px; padding:6px 8px; font-size:14px;
-}
-#origin   { width:70px; }
-#category { width:70px; }
-#filter   { width:70px; }
-
 /* 右：購物車 + 頭貼 */
 .cart-group{ margin-left:auto; display:flex; align-items:center; gap:6px; white-space:nowrap }
 .avatar{ width:32px; height:32px; border-radius:999px; background:#111827; color:#fff; display:inline-flex; align-items:center; justify-content:center; font-weight:700 }
@@ -109,3 +101,13 @@ main{ flex:1 }
 .site-footer a{ color:#111; text-decoration:none }
 .site-footer a:hover{ text-decoration:underline }
 .site-footer .sep{ color:#9ca3af }
+
+/* 覆蓋頂欄下拉寬度 */
+.header-bar .select { width:auto; min-width:0; } /* 先把通用寬清掉 */
+.header-bar select#origin.select,
+.header-bar select#category.select,
+.header-bar select#filter.select {
+  width:70px;
+  min-width:70px;
+}
+
