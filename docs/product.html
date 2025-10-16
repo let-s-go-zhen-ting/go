@@ -31,73 +31,66 @@
   <main>
   <section class="card" id="box">載入中…</section>
 
-<script type="module">
+  <script type="module">
   import {
     initProducts, PRODUCTS, setCart, getCart, addToCartById, pushRecent
-  } from './assets/app.js';
+  } from './assets/app.js?v=8';
 
-  // 你的表ID＋分頁名
-  await initProducts('1BDw71gFOYp0e2kqOZFkfbV5v1dgC99kgwUEaHwjvxTk','商品');
+  // 請換成你的試算表 ID & 分頁名
+  await initProducts('你的SPREADSHEET_ID','商品');
   setCart(getCart());
 
-  const fmt = n => n.toLocaleString('zh-Hant-TW');
-  const id = new URLSearchParams(location.search).get('id') || '';
-  const p = PRODUCTS.find(x=>x.id===id);
-
+  const fmt = n => Number(n||0).toLocaleString('zh-Hant-TW');
+  const id  = new URLSearchParams(location.search).get('id') || '';
+  const p   = PRODUCTS.find(x=>x.id===id);
   const box = document.getElementById('box');
+
   if(!p){
     box.innerHTML = `<div class="small">找不到此商品（ID: ${id}）。</div>`;
-  }else{
-    // 記錄最近瀏覽
+  } else {
     pushRecent(p.id);
 
     document.getElementById('title').textContent = p.title;
-    // 取代原本的 box.innerHTML = `...`
-box.innerHTML = `
-  <div class="row" style="gap:16px; align-items:flex-start; flex-wrap:wrap">
-    <div style="flex:1; min-width:280px">
-      ${p.image ? `<img src="${p.image}" alt="${p.title}" style="width:100%;border-radius:12px;object-fit:cover;aspect-ratio:1/1;">` : ''}
-    </div>
 
-    <div style="flex:1; min-width:260px">
-      <h2 style="margin:0 0 8px 0">
-        ${p.title}
-        ${p.isNew ? '<span class="badge new" style="margin-left:8px">NEW</span>' : ''}
-        ${p.isPreorder ? '<span class="badge preorder" style="margin-left:6px">預購</span>' : ''}
-      </h2>
-
-      ${p.isPreorder && p.eta ? `<div class="small" style="margin:4px 0 8px 0">預計出貨：${p.eta}</div>` : ''}
-
-      <div class="small" style="margin-bottom:6px">分類：${p.category || '其他'}</div>
-      <div style="font-size:20px; font-weight:700; margin:8px 0">NT$ ${fmt(p.price)}</div>
-
-      <div style="margin:6px 0">
-        ${(p.stock ?? 0) > 0
-          ? `<span class="badge">庫存 ${p.stock}</span>`
-          : `<span class="badge" style="border-color:#b91c1c;color:#b91c1c">缺貨</span>`
-        }
-      </div>
-
-      <div class="row" style="margin-top:12px">
-        <button class="btn" id="addBtn" ${(p.stock ?? 0) <= 0 ? 'disabled' : ''}>加入購物車</button>
-        <a class="btn secondary" href="checkout.html">前往結帳</a>
-      </div>
-    </div>
-  </div>
-
-  ${p.desc ? `<section class="card" style="margin-top:16px">
-    <h3 style="margin:0 0 8px">商品詳情</h3>
-    <div style="white-space:pre-wrap">${p.desc}</div>
-  </section>` : ''}
-`;
-
+    const badges = `
+      ${p.isNew ? '<span class="badge new">NEW</span>' : ''}
+      ${p.isPreorder ? '<span class="badge preorder">預購</span>' : ''}
     `;
+    const eta  = (p.isPreorder && p.eta) ? `<div class="small" style="margin-top:4px">預計出貨：${p.eta}</div>` : '';
+    const desc = p.desc ? `<div style="white-space:pre-wrap;margin-top:8px">${p.desc}</div>` : '';
+
+    box.innerHTML = `
+      <div class="row" style="gap:16px; align-items:flex-start; flex-wrap:wrap">
+        <div style="flex:1; min-width:280px">
+          ${p.image ? `<img src="${p.image}" alt="${p.title}" style="width:100%;border-radius:12px;object-fit:cover;aspect-ratio:1/1;">` : ''}
+        </div>
+        <div style="flex:1; min-width:260px">
+          <h2 style="margin:0 0 8px 0">${p.title} ${badges}</h2>
+          ${eta}
+          <div class="small" style="margin-bottom:6px">分類：${p.category || '其他'}</div>
+          <div style="font-size:20px; font-weight:700; margin:8px 0">NT$ ${fmt(p.price)}</div>
+          <div style="margin:6px 0">
+            ${(p.stock ?? 0) > 0
+              ? `<span class="badge">庫存 ${p.stock}</span>`
+              : `<span class="badge" style="border-color:#b91c1c;color:#b91c1c">缺貨</span>`
+            }
+          </div>
+          <div class="row" style="margin-top:12px">
+            <button class="btn" id="addBtn" ${(p.stock ?? 0) <= 0 ? 'disabled' : ''}>加入購物車</button>
+            <a class="btn secondary" href="checkout.html">前往結帳</a>
+          </div>
+          ${desc}
+        </div>
+      </div>
+    `;
+
     document.getElementById('addBtn')?.addEventListener('click', ()=>{
       addToCartById(p.id);
-      setCart(getCart()); // 更新徽章
+      setCart(getCart());
     });
   }
 </script>
+
 </main>
 
   <footer class="site-footer">
