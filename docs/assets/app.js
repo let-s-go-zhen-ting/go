@@ -35,6 +35,9 @@ export async function initProducts(SPREADSHEET_ID, SHEET_NAME = '商品') {
       stock: Number(obj.stock || 0),
       image: String(obj.image || '').trim(),
       isHidden: String(obj.isHidden || '').toUpperCase() === 'TRUE',
+      isPreorder: String(obj.isPreorder || '').toUpperCase() === 'TRUE',
+      eta: String(obj.eta || '').trim(),
+      desc: String(obj.desc || '').trim(),
     };
   }).filter(p => p.id && !p.isHidden);
 
@@ -96,18 +99,23 @@ export function renderCards(container, products){
       </a>
 
       <div class="meta">
-        <div class="title">
-          ${p.title}
-          ${p.isNew ? '<span class="badge new" style="margin-left:8px">NEW</span>' : ''}
-        </div>
-        <div class="sub">分類：${p.category||'其他'}　庫存：${p.stock ?? 0}</div>
-        <div class="price">NT$ ${fmt(p.price)}</div>
+  <div class="title">
+    ${p.title}
+    ${p.isNew ? '<span class="badge new" style="margin-left:8px">NEW</span>' : ''}
+    ${p.isPreorder ? '<span class="badge preorder" style="margin-left:6px">預購</span>' : ''}
+  </div>
 
-        <div class="actions">
-          <button class="btn" data-action="add" data-id="${p.id}" ${(p.stock??0)<=0?'disabled':''}>加入購物車</button>
-          <a class="btn secondary" href="product.html?id=${encodeURIComponent(p.id)}">看一下</a>
-        </div>
-      </div>
+  ${p.isPreorder && p.eta ? `<div class="small">預計出貨：${p.eta}</div>` : ''}
+
+  <div class="sub">分類：${p.category||'其他'}　庫存：${p.stock ?? 0}</div>
+  <div class="price">NT$ ${fmt(p.price)}</div>
+
+  <div class="actions">
+    <button class="btn" data-action="add" data-id="${p.id}" ${(p.stock??0)<=0?'disabled':''}>加入購物車</button>
+    <a class="btn secondary" href="product.html?id=${encodeURIComponent(p.id)}">看一下</a>
+  </div>
+</div>
+
     </div>
   `).join('');
 
