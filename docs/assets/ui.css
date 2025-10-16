@@ -82,3 +82,17 @@ hr { border:0; border-top:1px solid #eee; margin:12px 0 }
 .grid.list{
   grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); /* 調 420 可更短/更長 */
 }
+
+/* 右上角品牌角標 */
+.corner-brand{
+  position: fixed; top: 8px; left: 8px;
+  right: auto;
+  display:flex; align-items:center; gap:8px;
+  background: rgba(255,255,255,.92);
+  border: 1px solid #e5e7eb; border-radius: 9999px;
+  padding: 6px 10px; box-shadow: 0 2px 8px rgba(0,0,0,.08);
+  z-index: 1000;
+}
+.corner-brand img{ width:24px; height:24px; border-radius:6px }
+.corner-brand .brand-zh{ font-weight:700 }
+.corner-brand .brand-en{ font-size:12px; color:#6b7280; line-height:1 }
