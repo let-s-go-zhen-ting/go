@@ -53,7 +53,7 @@ body{ padding-top: 64px; } /* 若頂欄高度改了，記得同步調整 */
   min-width:0; width:110px; padding:6px 8px; font-size:14px;
 }
 #origin   { width:70px; }
-#category { width:80px; }
+#category { width:70px; }
 #filter   { width:70px; }
 
 /* 右：購物車 + 頭貼 */
