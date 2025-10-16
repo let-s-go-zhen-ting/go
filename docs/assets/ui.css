@@ -52,9 +52,9 @@ body{ padding-top: 64px; } /* 若頂欄高度改了，記得同步調整 */
 .header-bar .select{
   min-width:0; width:110px; padding:6px 8px; font-size:14px;
 }
-#origin   { width:110px; }
-#category { width:120px; }
-#filter   { width:110px; }
+#origin   { width:70px; }
+#category { width:80px; }
+#filter   { width:70px; }
 
 /* 右：購物車 + 頭貼 */
 .cart-group{ margin-left:auto; display:flex; align-items:center; gap:6px; white-space:nowrap }
