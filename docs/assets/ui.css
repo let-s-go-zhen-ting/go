@@ -28,34 +28,51 @@ label{ display:block; margin:8px 0 4px }
 .badge.new{ border-color:#2563eb; color:#2563eb }
 .small{ font-size:12px; color:#6b7280 }
 
-/* Header bar（品牌在左，搜尋＋下拉置中，購物車＋頭貼在右） */
+/* 頂部列（固定在最上方、置中與內容同寬） */
 .header-bar{
-  display:flex; align-items:center; gap:12px;
+  position: fixed; top: 0; left: 50%; transform: translateX(-50%);
+  width: min(880px, 100% - 32px);
+  z-index: 100;
+  display:flex; align-items:center; gap:8px;
   padding:10px 12px; background:#fff; border-bottom:1px solid #e5e7eb;
-  position:sticky; top:0; z-index:20;
-  margin:16px 0;
+  white-space: nowrap;
 }
+body{ padding-top: 64px; } /* 若頂欄高度改了，記得同步調整 */
+
+/* 品牌（左） */
 .corner-brand{ display:flex; align-items:center; gap:8px; text-decoration:none; color:inherit }
 .corner-brand img{ width:32px; height:32px; border-radius:8px }
 .brand-zh{ font-weight:700; line-height:1 }
 .brand-en{ font-size:12px; color:#6b7280; line-height:1 }
 
+/* 搜尋（中，可伸縮） */
 .search.flex1{ flex:1 1 280px; min-width:160px }
-.header-bar .select{ min-width:120px; flex:0 0 auto }
+
+/* 三個下拉（縮窄） */
+.header-bar .select{
+  min-width:0; width:110px; padding:6px 8px; font-size:14px;
+}
+#origin   { width:110px; }
+#category { width:120px; }
+#filter   { width:110px; }
+
+/* 右：購物車 + 頭貼 */
 .cart-group{ margin-left:auto; display:flex; align-items:center; gap:6px; white-space:nowrap }
 .avatar{ width:32px; height:32px; border-radius:999px; background:#111827; color:#fff; display:inline-flex; align-items:center; justify-content:center; font-weight:700 }
 
-/* RWD：小螢幕允許換行 */
-@media (max-width: 900px){ .header-bar{ flex-wrap:wrap } }
+/* RWD：很小的螢幕允許橫向卷動避免換行 */
+@media (max-width: 600px){
+  .header-bar{ overflow-x:auto; }
+}
 
-/* Product card（圖區） */
+/* Product image box */
 .card .imgbox{
   width:100%; height:120px; background:#fafafa; border-radius:10px; margin:8px 0;
   display:flex; align-items:center; justify-content:center; overflow:hidden
 }
 .card .imgbox img{ max-width:100%; max-height:100%; height:auto; width:auto; object-fit:contain }
 
-/* === 列表型商品卡（長條） === */
+/* 列表型商品卡（長條） */
 .grid.list{ grid-template-columns:repeat(auto-fill, minmax(350px, 1fr)); }
 .card.row-card{ display:flex; gap:12px; align-items:center }
 .row-card .thumb{ width:120px; height:120px; flex:0 0 120px; border-radius:12px; object-fit:cover; background:#f3f4f6 }
@@ -92,29 +109,3 @@ main{ flex:1 }
 .site-footer a{ color:#111; text-decoration:none }
 .site-footer a:hover{ text-decoration:underline }
 .site-footer .sep{ color:#9ca3af }
-
-/* 固定頂部的一列，與頁面同寬置中 */
-.header-bar{
-  position: fixed; top: 0; left: 50%;
-  transform: translateX(-50%);
-  width: min(880px, 100% - 32px);
-  z-index: 100;
-  display:flex; align-items:center; gap:12px;
-  padding:10px 12px; background:#fff; border-bottom:1px solid #e5e7eb;
-  white-space: nowrap;        /* 一行顯示 */
-}
-body{ padding-top: 64px; }    /* 讓內容不被蓋住 */
-
-/* 讓搜尋欄可伸縮，其餘維持固定寬度 */
-.search.flex1{ flex:1 1 280px; min-width:160px; }
-.header-bar .select{ min-width:120px; }
-.cart-group{ margin-left:auto; display:flex; align-items:center; gap:6px; }
-.corner-brand{ display:flex; align-items:center; gap:8px; text-decoration:none; color:inherit; }
-.corner-brand img{ width:32px; height:32px; border-radius:8px; }
-.brand-zh{ font-weight:700; line-height:1; }
-.brand-en{ font-size:12px; color:#6b7280; line-height:1; }
-
-/* 真的太小的螢幕：允許橫向滾動避免自動換行 */
-@media (max-width: 600px){
-  .header-bar{ overflow-x:auto; }
-}
