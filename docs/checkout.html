@@ -155,6 +155,17 @@
       receiver: { name, phone },
       deliveryMethod,
       deliveryDetails,
+
+       // ⬇️ 這段就是新增的進度欄位
+      progress: {
+        awaitPay: pm !== 'cod',   // 貨到付款不用付款，其他一律待付款
+        toShip:   false,          // 待發貨（之後由你/後台更新）
+        inbound:  false,          // 待運回
+        toSend:   false,          // 待寄出
+        pickup:   false,          // 待取貨（7-11 才會用到，先預設 false）
+        meetup:   false           // 待面交（面交才會用到，先預設 false）
+      },
+      
       createdAt: serverTimestamp(),
       paymentReport: {},
       notesFromBuyer: ""
