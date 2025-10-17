@@ -88,50 +88,66 @@
   });
 
   async function load(){
-    const q = query(collection(db, "orders"),
-      where("paymentStatus","==","proof_submitted"),
-      orderBy("createdAt","desc"));
+    const q = query(collection(db, "orders"), orderBy("createdAt","desc"));
     const snaps = await getDocs(q);
     ordersDiv.innerHTML = "";
     snaps.forEach(s=>{
       const o = s.data();
+      const created = o.createdAt?.toDate ? o.createdAt.toDate().toLocaleString('zh-TW'): '';
+      const html = `
+        <div class="card">
+          <div><strong>訂單 ${s.id}</strong>｜NT$ ${o.amount}｜${created}</div>
+          <div>付款：${o.paymentMethod}｜付款狀態：<b>${o.paymentStatus||'-'}</b>｜物流：<b>${o.shipmentStatus||'-'}</b></div>
+          <div>配送：${o.deliveryMethod||'-'}</div>
+          <div>收件人：${o?.receiver?.name||''}｜${o?.receiver?.phone||''}</div>
+          <div style="margin-top:10px" class="row">
+            <button class="btn" data-action="markPaid" data-id="${s.id}">標記已付款</button>
+            <button class="btn secondary" data-action="toShip" data-id="${s.id}">設為「待發貨」</button>
+            <button class="btn secondary" data-action="inbound" data-id="${s.id}">設為「待運回」</button>
+            <button class="btn secondary" data-action="toSend" data-id="${s.id}">設為「待寄出」</button>
+            <button class="btn secondary" data-action="pickupReady" data-id="${s.id}">到店可取</button>
+            <button class="btn secondary" data-action="meetup" data-id="${s.id}">面交中</button>
+          </div>
+        </div>`;
       const el = document.createElement('div');
-      el.className = 'card';
-      el.innerHTML = `
-        <div><strong>訂單 ${s.id}</strong>｜NT$ ${o.amount}</div>
-        <div>付款：${o.paymentMethod}｜狀態：${o.paymentStatus}</div>
-        <div>收件人：${o?.receiver?.name || ''}｜${o?.receiver?.phone || ''}</div>
-        <div>備註（買家）：${o?.notesFromBuyer || ''}</div>
-        <div>憑證：${(o.proofs||[]).map(p=>`<a target="_blank" href="${p.url}">查看</a>`).join('、') || '—'}</div>
-        <div style="margin-top:8px" class="row">
-          <button class="btn" data-action="paid" data-id="${s.id}">標記為已付款</button>
-          <button class="btn secondary" data-action="fail" data-id="${s.id}">退回</button>
-        </div>
-      `;
-      ordersDiv.appendChild(el);
+      el.innerHTML = html;
+      ordersDiv.appendChild(el.firstElementChild);
     });
-
-    ordersDiv.onclick = async (e)=>{
-      const btn = e.target.closest('button[data-action]');
-      if(!btn) return;
-      const id = btn.getAttribute('data-id');
-      const action = btn.getAttribute('data-action');
-      if(action==='paid'){
-        await updateDoc(doc(db, "orders", id), {
-          paymentStatus: "paid",
-          adminMemo: "已核對款項",
-          paidAt: serverTimestamp()
-        });
-        alert('已標記為已付款');
-      }else if(action==='fail'){
-        const reason = prompt('退回原因：','金額不符/帳號不符…') || '';
-        await updateDoc(doc(db, "orders", id), {
-          paymentStatus: "failed",
-          adminMemo: reason
-        });
-        alert('已退回');
-      }
-      await load();
-    };
   }
+
+  // 按鈕事件（一次掛在容器上）
+  ordersDiv.addEventListener('click', async (e)=>{
+    const btn = e.target.closest('button[data-action]');
+    if(!btn) return;
+    const id = btn.dataset.id;
+    const ref = doc(db, "orders", id);
+
+    try{
+      switch(btn.dataset.action){
+        case 'markPaid':
+          await updateDoc(ref, { paymentStatus: 'paid', paidAt: serverTimestamp(), shipmentStatus: 'none' });
+          break;
+        case 'toShip':        // 已付款，尚未安排出貨
+          await updateDoc(ref, { paymentStatus: 'paid', shipmentStatus: 'none' });
+          break;
+        case 'inbound':       // 海外/外部運回中
+          await updateDoc(ref, { shipmentStatus: 'inbound' });
+          break;
+        case 'toSend':        // 我方收到貨，準備寄出
+          await updateDoc(ref, { shipmentStatus: 'to_send' });
+          break;
+        case 'pickupReady':   // 超商到店可取
+          await updateDoc(ref, { deliveryMethod: 'seven', shipmentStatus: 'pickup_ready' }); // 或 'arrived'
+          break;
+        case 'meetup':        // 面交流程中
+          await updateDoc(ref, { deliveryMethod: 'meetup', shipmentStatus: 'to_send' });
+          break;
+      }
+      alert('已更新狀態');
+      await load();
+    }catch(err){
+      alert('更新失敗：' + (err?.message || err));
+    }
+  });
+
 </script>
