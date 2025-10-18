@@ -5,10 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>後台審單</title>
   <link rel="stylesheet" href="assets/ui.css">
-  <!-- Favicon / PWA icons -->
   <link rel="icon" type="image/png" href="favicon.png?v=2">
   <link rel="apple-touch-icon" href="apple-touch-icon.png?v=2">
-
 </head>
 <body>
   <header>
@@ -29,184 +27,196 @@
 
   <!-- 訂單列表卡片（登入後顯示） -->
   <section class="card" id="ordersCard" style="display:none">
-  <h2>訂單列表</h2>
+    <h2>訂單列表</h2>
 
-  <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:8px">
-    <div class="small">篩選：</div>
-    <select id="statusFilter" class="select" style="width:140px">
-      <option value="all">全部</option>
-      <option value="awaitPay">待付款</option>
-      <option value="toShip">待發貨</option>
-      <option value="inbound">待運回</option>
-      <option value="toSend">待寄出</option>
-      <option value="pickup">待取貨</option>
-      <option value="meetup">待面交</option>
-    </select>
-  </div>
+    <!-- 篩選選單 -->
+    <div class="row" style="justify-content:flex-start;align-items:center;margin-bottom:8px">
+      <div class="small">篩選：</div>
+      <select id="statusFilter" class="select" style="width:140px">
+        <option value="all">全部</option>
+        <option value="awaitPay">待付款</option>
+        <option value="toShip">待發貨</option>
+        <option value="inbound">待運回</option>
+        <option value="toSend">待寄出</option>
+        <option value="pickup">待取貨</option>
+        <option value="meetup">待面交</option>
+      </select>
+    </div>
 
-  <div id="orders"></div>
-</section>
-
+    <div id="orders"></div>
+  </section>
 
   <script type="module">
-  import { auth, db, isAdminUser } from "./assets/firebase.js?v=6";
-  import { onAuthStateChanged, signInWithEmailAndPassword, signOut }
-    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-  import { collection, query, where, orderBy, getDocs, doc, updateDoc, serverTimestamp }
-    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { auth, db, isAdminUser } from "./assets/firebase.js?v=6";
+    import { onAuthStateChanged, signInWithEmailAndPassword, signOut }
+      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { collection, query, orderBy, getDocs, doc, updateDoc, serverTimestamp }
+      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-  const $ = id => document.getElementById(id);
-  const loginCard  = $('loginCard');
-  const ordersCard = $('ordersCard');
-  const ordersDiv  = $('orders');
-  const statusSel  = $('statusFilter');
+    const $ = id => document.getElementById(id);
+    const loginCard  = $('loginCard');
+    const ordersCard = $('ordersCard');
+    const ordersDiv  = $('orders');
+    const statusSel  = $('statusFilter');
 
-  // 登入
-  $('loginBtn')?.addEventListener('click', async ()=>{
-    const email = $('email').value.trim();
-    const pw    = $('password').value.trim();
-    if(!email || pw.length < 6){ alert('請填 Email 與至少 6 碼密碼'); return; }
-    try{
-      await signInWithEmailAndPassword(auth, email, pw);
-      if(!isAdminUser(auth.currentUser)){
-        await signOut(auth);
-        alert('非管理員帳號，已拒絕存取');
-        location.href = 'index.html';
+    let ALL = [];           // 一次載入全部訂單 {id, data}
+
+    // ======= 登入 =======
+    $('loginBtn')?.addEventListener('click', async ()=>{
+      const email = $('email').value.trim();
+      const pw    = $('password').value.trim();
+      if(!email || pw.length < 6){ alert('請填 Email 與至少 6 碼密碼'); return; }
+      try{
+        await signInWithEmailAndPassword(auth, email, pw);
+        if(!isAdminUser(auth.currentUser)){
+          await signOut(auth);
+          alert('非管理員帳號，已拒絕存取');
+          location.href = 'index.html';
+        }
+      }catch(e){
+        alert('登入失敗：' + (e?.message || e));
       }
-    }catch(e){
-      alert('登入失敗：' + (e?.message || e));
-    }
-  });
-
-  // 登出
-  $('signOutBtn')?.addEventListener('click', async ()=>{ await signOut(auth); });
-
-  // 篩選選單
-  statusSel?.addEventListener('change', ()=> loadOrders(statusSel.value));
-
-  // 權限控管 + 預設載入
-  onAuthStateChanged(auth, async (u)=>{
-    if(!u){
-      loginCard.style.display='block';
-      ordersCard.style.display='none';
-      return;
-    }
-    if(!isAdminUser(u)){
-      loginCard.style.display='block';
-      ordersCard.style.display='none';
-      alert('無權限存取此頁'); location.href='index.html';
-      return;
-    }
-    loginCard.style.display='none';
-    ordersCard.style.display='block';
-    await loadOrders(statusSel?.value || 'all');
-  });
-
-  // 依狀態載入訂單
-  async function loadOrders(filter='all'){
-    ordersDiv.innerHTML = '<div class="small">載入中…</div>';
-
-    const base = collection(db, "orders");
-    let q;
-    try {
-      switch(filter){
-        case 'awaitPay':
-          q = query(base, where("paymentStatus","in", ["await_line","pending"]), orderBy("createdAt","desc"));
-          break;
-        case 'toShip':
-          q = query(base, where("paymentStatus","==","paid"), where("shipmentStatus","in",[null,"","none"]), orderBy("createdAt","desc"));
-          break;
-        case 'inbound':
-          q = query(base, where("shipmentStatus","==","inbound"), orderBy("createdAt","desc"));
-          break;
-        case 'toSend':
-          q = query(base, where("shipmentStatus","==","to_send"), orderBy("createdAt","desc"));
-          break;
-        case 'pickup':
-          q = query(base, where("deliveryMethod","==","seven"), where("shipmentStatus","in",["arrived","pickup_ready"]), orderBy("createdAt","desc"));
-          break;
-        case 'meetup':
-          q = query(base, where("deliveryMethod","==","meetup"), orderBy("createdAt","desc"));
-          break;
-        default:
-          q = query(base, orderBy("createdAt","desc"));
-      }
-    } catch {
-      q = query(base, orderBy("createdAt","desc"));
-    }
-
-    const snaps = await getDocs(q);
-    const rows = [];
-    snaps.forEach(s=>{
-      const o = s.data();
-      if(!passClientFilter(o, filter)) return;
-      const created = o.createdAt?.toDate ? o.createdAt.toDate().toLocaleString('zh-TW') : '';
-      rows.push(`
-        <div class="card">
-          <div><strong>訂單 ${s.id}</strong>｜NT$ ${o.amount||0}｜${created}</div>
-          <div>付款：${o.paymentMethod||'-'}｜付款狀態：<b>${o.paymentStatus||'-'}</b>｜物流：<b>${o.shipmentStatus||'-'}</b>｜配送：${o.deliveryMethod||'-'}</div>
-          <div>收件人：${o?.receiver?.name||''}｜${o?.receiver?.phone||''}</div>
-          <div style="margin-top:10px" class="row">
-            <button class="btn" data-action="markPaid"    data-id="${s.id}">標記已付款</button>
-            <button class="btn secondary" data-action="toShip"      data-id="${s.id}">設為「待發貨」</button>
-            <button class="btn secondary" data-action="inbound"     data-id="${s.id}">設為「待運回」</button>
-            <button class="btn secondary" data-action="toSend"      data-id="${s.id}">設為「待寄出」</button>
-            <button class="btn secondary" data-action="pickupReady" data-id="${s.id}">到店可取</button>
-            <button class="btn secondary" data-action="meetup"      data-id="${s.id}">面交中</button>
-          </div>
-        </div>
-      `);
     });
 
-    ordersDiv.innerHTML = rows.length ? rows.join('') : '<div class="small">沒有符合條件的訂單</div>';
-  }
+    // 登出
+    $('signOutBtn')?.addEventListener('click', async ()=>{ await signOut(auth); });
 
-  // 前端補濾（避免索引問題時仍能篩）
-  function passClientFilter(o, tab){
-    if(tab==='all') return true;
-    switch(tab){
-      case 'awaitPay': return (o.paymentStatus||'')!=='paid';
-      case 'toShip':   return o.paymentStatus==='paid' && (!o.shipmentStatus || o.shipmentStatus==='none');
-      case 'inbound':  return o.shipmentStatus==='inbound';
-      case 'toSend':   return o.shipmentStatus==='to_send';
-      case 'pickup':   return o.deliveryMethod==='seven' && ['arrived','pickup_ready'].includes(o.shipmentStatus||'');
-      case 'meetup':   return o.deliveryMethod==='meetup';
-      default: return true;
-    }
-  }
-
-  // 狀態操作（容器代理）
-  ordersDiv.addEventListener('click', async (e)=>{
-    const btn = e.target.closest('button[data-action]');
-    if(!btn) return;
-    const id = btn.dataset.id;
-    const ref = doc(db, "orders", id);
-    try{
-      switch(btn.dataset.action){
-        case 'markPaid':
-          await updateDoc(ref, { paymentStatus:'paid', paidAt:serverTimestamp(), shipmentStatus:'none' });
-          break;
-        case 'toShip':
-          await updateDoc(ref, { paymentStatus:'paid', shipmentStatus:'none' });
-          break;
-        case 'inbound':
-          await updateDoc(ref, { shipmentStatus:'inbound' });
-          break;
-        case 'toSend':
-          await updateDoc(ref, { shipmentStatus:'to_send' });
-          break;
-        case 'pickupReady':
-          await updateDoc(ref, { deliveryMethod:'seven', shipmentStatus:'pickup_ready' });
-          break;
-        case 'meetup':
-          await updateDoc(ref, { deliveryMethod:'meetup', shipmentStatus:'to_send' });
-          break;
+    // 權限控管 + 預設載入
+    onAuthStateChanged(auth, async (u)=>{
+      if(!u){
+        loginCard.style.display='block';
+        ordersCard.style.display='none';
+        return;
       }
-      alert('已更新狀態');
-      await loadOrders(statusSel?.value || 'all');
-    }catch(err){
-      alert('更新失敗：' + (err?.message || err));
-    }
-  });
-</script>
+      if(!isAdminUser(u)){
+        loginCard.style.display='block';
+        ordersCard.style.display='none';
+        alert('無權限存取此頁'); location.href='index.html';
+        return;
+      }
+      loginCard.style.display='none';
+      ordersCard.style.display='block';
+      await loadAll();                 // 載入全部
+      render(statusSel?.value || 'all'); // 預設顯示
+    });
 
+    // ======= 一次載入所有訂單（避免索引問題） =======
+    async function loadAll(){
+      ordersDiv.innerHTML = '<div class="small">載入中…</div>';
+      ALL = [];
+      try{
+        const snaps = await getDocs(query(collection(db,"orders"), orderBy("createdAt","desc")));
+        snaps.forEach(s=>ALL.push({ id: s.id, data: s.data() }));
+      }catch(_){
+        const snaps = await getDocs(collection(db,"orders"));
+        snaps.forEach(s=>ALL.push({ id: s.id, data: s.data() }));
+        // 退回未排序也能顯示
+        ALL.sort((a,b)=>{
+          const ta = a.data.createdAt?.toMillis?.() || 0;
+          const tb = b.data.createdAt?.toMillis?.() || 0;
+          return tb - ta;
+        });
+      }
+    }
+
+    // ======= 狀態推論（統一分頁邏輯） =======
+    function stageOf(o){
+      const pay = (o.paymentStatus||'').toLowerCase();   // 'paid' / 'pending'...
+      const ship = (o.shipmentStatus||'').toLowerCase(); // 'none' / 'to_send' / 'inbound' / 'pickup_ready'...
+      const dm = (o.deliveryMethod||'').toLowerCase();   // 'seven' / 'meetup' / ''
+
+      if (pay !== 'paid') return 'awaitPay';
+      if (dm === 'seven' && (ship === 'arrived' || ship === 'pickup_ready')) return 'pickup';
+      if (dm === 'meetup') return 'meetup';
+      if (ship === 'inbound') return 'inbound';
+      if (ship === 'to_send') return 'toSend';
+      return 'toShip'; // 已付但未安排出貨
+    }
+
+    // ======= 渲染清單 + 更新下拉的數量 =======
+    function render(filter='all'){
+      // 計數
+      const counts = { all: ALL.length, awaitPay:0, toShip:0, inbound:0, toSend:0, pickup:0, meetup:0 };
+      ALL.forEach(({data:o})=>{ const s = stageOf(o); if(counts[s]!=null) counts[s]++; });
+
+      // 下拉顯示數量
+      if(statusSel){
+        const label = (val, txt) => `${txt}（${counts[val]}）`;
+        [...statusSel.options].forEach(op=>{
+          op.textContent =
+            op.value==='all'      ? label('all','全部') :
+            op.value==='awaitPay' ? label('awaitPay','待付款') :
+            op.value==='toShip'   ? label('toShip','待發貨') :
+            op.value==='inbound'  ? label('inbound','待運回') :
+            op.value==='toSend'   ? label('toSend','待寄出') :
+            op.value==='pickup'   ? label('pickup','待取貨') :
+            op.value==='meetup'   ? label('meetup','待面交') : op.textContent;
+        });
+      }
+
+      // 產生清單
+      const rows = ALL
+        .filter(x => filter==='all' ? true : stageOf(x.data) === filter)
+        .map(({id, data:o})=>{
+          const created = o.createdAt?.toDate ? o.createdAt.toDate().toLocaleString('zh-TW') : '';
+          return `
+            <div class="card">
+              <div><strong>訂單 ${id}</strong>｜NT$ ${o.amount||0}｜${created}</div>
+              <div>付款：${o.paymentMethod||'-'}｜付款狀態：<b>${o.paymentStatus||'-'}</b>｜物流：<b>${o.shipmentStatus||'-'}</b>｜配送：${o.deliveryMethod||'-'}</div>
+              <div>收件人：${o?.receiver?.name||''}｜${o?.receiver?.phone||''}</div>
+              <div style="margin-top:10px" class="row">
+                <button class="btn" data-action="markPaid"    data-id="${id}">標記已付款</button>
+                <button class="btn secondary" data-action="toShip"      data-id="${id}">設為「待發貨」</button>
+                <button class="btn secondary" data-action="inbound"     data-id="${id}">設為「待運回」</button>
+                <button class="btn secondary" data-action="toSend"      data-id="${id}">設為「待寄出」</button>
+                <button class="btn secondary" data-action="pickupReady" data-id="${id}">到店可取</button>
+                <button class="btn secondary" data-action="meetup"      data-id="${id}">面交中</button>
+              </div>
+            </div>`;
+        });
+
+      ordersDiv.innerHTML = rows.length ? rows.join('') : '<div class="small">這個分類目前沒有訂單</div>';
+    }
+
+    // 篩選選單變更
+    statusSel?.addEventListener('change', ()=> render(statusSel.value));
+
+    // ======= 狀態操作（容器代理） =======
+    ordersDiv.addEventListener('click', async (e)=>{
+      const btn = e.target.closest('button[data-action]');
+      if(!btn) return;
+      const id = btn.dataset.id;
+      const ref = doc(db, "orders", id);
+      const keepFilter = statusSel?.value || 'all';
+
+      try{
+        switch(btn.dataset.action){
+          case 'markPaid':
+            await updateDoc(ref, { paymentStatus:'paid', paidAt:serverTimestamp(), shipmentStatus:'none' });
+            break;
+          case 'toShip':
+            await updateDoc(ref, { paymentStatus:'paid', shipmentStatus:'none' });
+            break;
+          case 'inbound':
+            await updateDoc(ref, { shipmentStatus:'inbound' });
+            break;
+          case 'toSend':
+            await updateDoc(ref, { shipmentStatus:'to_send' });
+            break;
+          case 'pickupReady':
+            await updateDoc(ref, { deliveryMethod:'seven', shipmentStatus:'pickup_ready' });
+            break;
+          case 'meetup':
+            await updateDoc(ref, { deliveryMethod:'meetup', shipmentStatus:'to_send' });
+            break;
+        }
+        alert('已更新狀態');
+        await loadAll();        // 重新抓資料
+        render(keepFilter);     // 保持目前的分頁
+      }catch(err){
+        alert('更新失敗：' + (err?.message || err));
+      }
+    });
+  </script>
+</body>
+</html>
