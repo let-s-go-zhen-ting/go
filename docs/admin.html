@@ -29,13 +29,28 @@
 
   <!-- 訂單列表卡片（登入後顯示） -->
   <section class="card" id="ordersCard" style="display:none">
-    <h2>待審核（有上傳憑證）</h2>
-    <div id="orders"></div>
-  </section>
+  <h2>訂單列表</h2>
+
+  <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:8px">
+    <div class="small">篩選：</div>
+    <select id="statusFilter" class="select" style="width:140px">
+      <option value="all">全部</option>
+      <option value="awaitPay">待付款</option>
+      <option value="toShip">待發貨</option>
+      <option value="inbound">待運回</option>
+      <option value="toSend">待寄出</option>
+      <option value="pickup">待取貨</option>
+      <option value="meetup">待面交</option>
+    </select>
+  </div>
+
+  <div id="orders"></div>
+</section>
+
 
   <script type="module">
   import { auth, db, isAdminUser } from "./assets/firebase.js?v=6";
-  import { onAuthStateChanged, signInWithEmailAndPassword, signOut } 
+  import { onAuthStateChanged, signInWithEmailAndPassword, signOut }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
   import { collection, query, where, orderBy, getDocs, doc, updateDoc, serverTimestamp }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -44,8 +59,9 @@
   const loginCard  = $('loginCard');
   const ordersCard = $('ordersCard');
   const ordersDiv  = $('orders');
+  const statusSel  = $('statusFilter');
 
-  // 登入按鈕：先登入，再檢查是否管理員；不是就立刻登出並提示
+  // 登入
   $('loginBtn')?.addEventListener('click', async ()=>{
     const email = $('email').value.trim();
     const pw    = $('password').value.trim();
@@ -57,7 +73,6 @@
         alert('非管理員帳號，已拒絕存取');
         location.href = 'index.html';
       }
-      // 是管理員的話，onAuthStateChanged 會自動進入 load()
     }catch(e){
       alert('登入失敗：' + (e?.message || e));
     }
@@ -66,88 +81,132 @@
   // 登出
   $('signOutBtn')?.addEventListener('click', async ()=>{ await signOut(auth); });
 
-  // 監聽登入狀態：只有管理員才顯示訂單清單；否則顯示登入或導回
+  // 篩選選單
+  statusSel?.addEventListener('change', ()=> loadOrders(statusSel.value));
+
+  // 權限控管 + 預設載入
   onAuthStateChanged(auth, async (u)=>{
-    if (!u) {
-      loginCard.style.display = 'block';
-      ordersCard.style.display = 'none';
+    if(!u){
+      loginCard.style.display='block';
+      ordersCard.style.display='none';
       return;
     }
-    if (!isAdminUser(u)) {
-      // 已登入但不是管理員 → 立即導回或顯示無權限
-      loginCard.style.display = 'block';
-      ordersCard.style.display = 'none';
-      alert('無權限存取此頁');
-      location.href = 'index.html';
+    if(!isAdminUser(u)){
+      loginCard.style.display='block';
+      ordersCard.style.display='none';
+      alert('無權限存取此頁'); location.href='index.html';
       return;
     }
-    // 是管理員 → 顯示清單
-    loginCard.style.display = 'none';
-    ordersCard.style.display = 'block';
-    await load(); // 你的載入訂單函式（維持原本）
+    loginCard.style.display='none';
+    ordersCard.style.display='block';
+    await loadOrders(statusSel?.value || 'all');
   });
 
-  async function load(){
-    const q = query(collection(db, "orders"), orderBy("createdAt","desc"));
+  // 依狀態載入訂單
+  async function loadOrders(filter='all'){
+    ordersDiv.innerHTML = '<div class="small">載入中…</div>';
+
+    const base = collection(db, "orders");
+    let q;
+    try {
+      switch(filter){
+        case 'awaitPay':
+          q = query(base, where("paymentStatus","in", ["await_line","pending"]), orderBy("createdAt","desc"));
+          break;
+        case 'toShip':
+          q = query(base, where("paymentStatus","==","paid"), where("shipmentStatus","in",[null,"","none"]), orderBy("createdAt","desc"));
+          break;
+        case 'inbound':
+          q = query(base, where("shipmentStatus","==","inbound"), orderBy("createdAt","desc"));
+          break;
+        case 'toSend':
+          q = query(base, where("shipmentStatus","==","to_send"), orderBy("createdAt","desc"));
+          break;
+        case 'pickup':
+          q = query(base, where("deliveryMethod","==","seven"), where("shipmentStatus","in",["arrived","pickup_ready"]), orderBy("createdAt","desc"));
+          break;
+        case 'meetup':
+          q = query(base, where("deliveryMethod","==","meetup"), orderBy("createdAt","desc"));
+          break;
+        default:
+          q = query(base, orderBy("createdAt","desc"));
+      }
+    } catch {
+      q = query(base, orderBy("createdAt","desc"));
+    }
+
     const snaps = await getDocs(q);
-    ordersDiv.innerHTML = "";
+    const rows = [];
     snaps.forEach(s=>{
       const o = s.data();
-      const created = o.createdAt?.toDate ? o.createdAt.toDate().toLocaleString('zh-TW'): '';
-      const html = `
+      if(!passClientFilter(o, filter)) return;
+      const created = o.createdAt?.toDate ? o.createdAt.toDate().toLocaleString('zh-TW') : '';
+      rows.push(`
         <div class="card">
-          <div><strong>訂單 ${s.id}</strong>｜NT$ ${o.amount}｜${created}</div>
-          <div>付款：${o.paymentMethod}｜付款狀態：<b>${o.paymentStatus||'-'}</b>｜物流：<b>${o.shipmentStatus||'-'}</b></div>
-          <div>配送：${o.deliveryMethod||'-'}</div>
+          <div><strong>訂單 ${s.id}</strong>｜NT$ ${o.amount||0}｜${created}</div>
+          <div>付款：${o.paymentMethod||'-'}｜付款狀態：<b>${o.paymentStatus||'-'}</b>｜物流：<b>${o.shipmentStatus||'-'}</b>｜配送：${o.deliveryMethod||'-'}</div>
           <div>收件人：${o?.receiver?.name||''}｜${o?.receiver?.phone||''}</div>
           <div style="margin-top:10px" class="row">
-            <button class="btn" data-action="markPaid" data-id="${s.id}">標記已付款</button>
-            <button class="btn secondary" data-action="toShip" data-id="${s.id}">設為「待發貨」</button>
-            <button class="btn secondary" data-action="inbound" data-id="${s.id}">設為「待運回」</button>
-            <button class="btn secondary" data-action="toSend" data-id="${s.id}">設為「待寄出」</button>
+            <button class="btn" data-action="markPaid"    data-id="${s.id}">標記已付款</button>
+            <button class="btn secondary" data-action="toShip"      data-id="${s.id}">設為「待發貨」</button>
+            <button class="btn secondary" data-action="inbound"     data-id="${s.id}">設為「待運回」</button>
+            <button class="btn secondary" data-action="toSend"      data-id="${s.id}">設為「待寄出」</button>
             <button class="btn secondary" data-action="pickupReady" data-id="${s.id}">到店可取</button>
-            <button class="btn secondary" data-action="meetup" data-id="${s.id}">面交中</button>
+            <button class="btn secondary" data-action="meetup"      data-id="${s.id}">面交中</button>
           </div>
-        </div>`;
-      const el = document.createElement('div');
-      el.innerHTML = html;
-      ordersDiv.appendChild(el.firstElementChild);
+        </div>
+      `);
     });
+
+    ordersDiv.innerHTML = rows.length ? rows.join('') : '<div class="small">沒有符合條件的訂單</div>';
   }
 
-  // 按鈕事件（一次掛在容器上）
+  // 前端補濾（避免索引問題時仍能篩）
+  function passClientFilter(o, tab){
+    if(tab==='all') return true;
+    switch(tab){
+      case 'awaitPay': return (o.paymentStatus||'')!=='paid';
+      case 'toShip':   return o.paymentStatus==='paid' && (!o.shipmentStatus || o.shipmentStatus==='none');
+      case 'inbound':  return o.shipmentStatus==='inbound';
+      case 'toSend':   return o.shipmentStatus==='to_send';
+      case 'pickup':   return o.deliveryMethod==='seven' && ['arrived','pickup_ready'].includes(o.shipmentStatus||'');
+      case 'meetup':   return o.deliveryMethod==='meetup';
+      default: return true;
+    }
+  }
+
+  // 狀態操作（容器代理）
   ordersDiv.addEventListener('click', async (e)=>{
     const btn = e.target.closest('button[data-action]');
     if(!btn) return;
     const id = btn.dataset.id;
     const ref = doc(db, "orders", id);
-
     try{
       switch(btn.dataset.action){
         case 'markPaid':
-          await updateDoc(ref, { paymentStatus: 'paid', paidAt: serverTimestamp(), shipmentStatus: 'none' });
+          await updateDoc(ref, { paymentStatus:'paid', paidAt:serverTimestamp(), shipmentStatus:'none' });
           break;
-        case 'toShip':        // 已付款，尚未安排出貨
-          await updateDoc(ref, { paymentStatus: 'paid', shipmentStatus: 'none' });
+        case 'toShip':
+          await updateDoc(ref, { paymentStatus:'paid', shipmentStatus:'none' });
           break;
-        case 'inbound':       // 海外/外部運回中
-          await updateDoc(ref, { shipmentStatus: 'inbound' });
+        case 'inbound':
+          await updateDoc(ref, { shipmentStatus:'inbound' });
           break;
-        case 'toSend':        // 我方收到貨，準備寄出
-          await updateDoc(ref, { shipmentStatus: 'to_send' });
+        case 'toSend':
+          await updateDoc(ref, { shipmentStatus:'to_send' });
           break;
-        case 'pickupReady':   // 超商到店可取
-          await updateDoc(ref, { deliveryMethod: 'seven', shipmentStatus: 'pickup_ready' }); // 或 'arrived'
+        case 'pickupReady':
+          await updateDoc(ref, { deliveryMethod:'seven', shipmentStatus:'pickup_ready' });
           break;
-        case 'meetup':        // 面交流程中
-          await updateDoc(ref, { deliveryMethod: 'meetup', shipmentStatus: 'to_send' });
+        case 'meetup':
+          await updateDoc(ref, { deliveryMethod:'meetup', shipmentStatus:'to_send' });
           break;
       }
       alert('已更新狀態');
-      await load();
+      await loadOrders(statusSel?.value || 'all');
     }catch(err){
       alert('更新失敗：' + (err?.message || err));
     }
   });
-
 </script>
+
