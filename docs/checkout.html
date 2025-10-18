@@ -159,7 +159,7 @@
         items: cart.map(i=>({ productId:i.id, title:i.title, qty:i.qty, priceSnapshot:i.price })),
         amount: cart.reduce((s,i)=>s+i.price*i.qty,0),
         paymentMethod: pm,
-        paymentStatus: "pending",
+        paymentStatus: "await_line",
         shipmentStatus: "none",
         receiver: { name, phone },
         deliveryMethod,
