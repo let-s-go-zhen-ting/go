@@ -9,10 +9,55 @@
   <link rel="apple-touch-icon" href="apple-touch-icon.png?v=2">
 </head>
 <body>
-  <header>
-    <h1>後台審單</h1>
-    <div><button class="btn secondary" id="signOutBtn">登出</button></div>
-  </header>
+  <!-- 固定頂欄（非首頁用） -->
+<header class="header-bar">
+  <!-- 左：品牌（logo + 中/英名） -->
+  <a href="index.html" class="corner-brand" aria-label="首頁" style="text-decoration:none;color:inherit">
+    <img src="favicon.png" alt="logo">
+    <div>
+      <div class="brand-zh">啦此購</div>
+      <div class="brand-en">Let's Go！！！</div>
+    </div>
+  </a>
+
+  <!-- 回上一頁 -->
+  <button class="btn secondary back-btn" onclick="history.back()">← 上一頁</button>
+
+  <!-- 中：頁面名稱 -->
+  <h1 id="pageTitle" class="page-title">後臺</h1>
+
+  <!-- 右：購物車/結帳 + 數量 + 頭貼（開抽屜） -->
+  <div class="cart-group">
+    <a href="checkout.html" class="btn secondary">購物車/結帳</a>
+    <span class="badge" id="cartCount">0</span>
+  </div>
+  <button id="avatarBtn" class="avatar" aria-label="開啟個人選單">我</button>
+</header>
+
+<!-- 抽屜（和首頁一樣，放一次就好） -->
+<div id="drawerMask"></div>
+<aside id="drawer">
+  <div class="drawer-header"><strong>我的帳戶</strong></div>
+  <div id="drawerProfile"></div>
+</aside>
+
+<script type="module">
+  import { setupDrawer } from './assets/app.js?v=8';
+
+  // 依頁面設定標題（每頁改這一行即可）
+  const PAGE_TITLE = '後臺';        // checkout.html -> '購物車/結帳'；product.html -> '商品詳情'；admin.html -> '後台審單'
+  const t = document.getElementById('pageTitle'); if (t) t.textContent = PAGE_TITLE;
+
+  // 購物車數量徽章
+  const cart = JSON.parse(localStorage.getItem('cart')||'[]');
+  const n = cart.reduce((s,i)=>s+i.qty,0);
+  const badge = document.getElementById('cartCount'); if (badge) badge.textContent = n;
+
+  // 啟用右側抽屜
+  setupDrawer();
+</script>
+
+  
 
   <!-- 登入卡片：管理員用 Email/密碼登入 -->
   <section class="card" id="loginCard">
