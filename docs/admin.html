@@ -9,30 +9,31 @@
   <link rel="apple-touch-icon" href="apple-touch-icon.png?v=2">
 </head>
 <body>
-  <!-- 固定頂欄（非首頁用） -->
-<header class="header-bar">
-  <!-- 左：品牌（logo + 中/英名） -->
-  <a href="index.html" class="corner-brand" aria-label="首頁" style="text-decoration:none;color:inherit">
-    <img src="favicon.png" alt="logo">
-    <div>
-      <div class="brand-zh">啦此購</div>
-      <div class="brand-en">Let's Go！！！</div>
-    </div>
-  </a>
+<!-- 固定頂欄（和首頁同風格） -->
+<header class="header-bar simple">
+  <!-- 左：品牌 -->
+  <a href="index.html" class="corner-brand" aria-label="首頁">
+    <img src="favicon.png" alt="logo">
+    <div>
+      <div class="brand-zh">啦此購</div>
+      <div class="brand-en">Let's Go！！！</div>
+    </div>
+  </a>
 
-  <!-- 回上一頁 -->
-  <button class="btn secondary back-btn" onclick="history.back()">← 上一頁</button>
+  <!-- 回上一頁（小顆） -->
+  <button class="btn secondary sm back-btn" onclick="history.back()">上一頁</button>
 
-  <!-- 中：頁面名稱 -->
-  <h1 id="pageTitle" class="page-title">後臺</h1>
+  <!-- 頁名（小字，貼近上一頁，整列置中對齊） -->
+  <div class="page-title sm">後臺</div>
 
-  <!-- 右：購物車/結帳 + 數量 + 頭貼（開抽屜） -->
-  <div class="cart-group">
-    <a href="checkout.html" class="btn secondary">購物車/結帳</a>
-    <span class="badge" id="cartCount">0</span>
-  </div>
-  <button id="avatarBtn" class="avatar" aria-label="開啟個人選單">我</button>
+  <!-- 右：購物車 / 頭貼 -->
+  <div class="cart-group">
+    <a href="checkout.html" class="btn secondary sm">購物車/結帳</a>
+    <span class="badge" id="cartCount">0</span>
+  </div>
+  <button id="avatarBtn" class="avatar">我</button>
 </header>
+
 
 <!-- 抽屜（和首頁一樣，放一次就好） -->
 <div id="drawerMask"></div>
