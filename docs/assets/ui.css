@@ -123,3 +123,17 @@ main{ flex:1 }
 .header-bar{ z-index: 1000 !important; }
 
 .badge.preorder{ border-color:#ef4444; color:#ef4444; }
+
+/* 頂欄（非首頁的扁平版） */
+.header-bar.simple { gap: 8px; }
+.header-bar .btn.sm { padding: 6px 10px; font-size: 14px; border-radius: 10px; }
+.header-bar .page-title.sm {
+  font-size: 14px; color:#6b7280; line-height:1;
+  margin: 0 4px 0 2px; /* 貼近「上一頁」鈕 */
+}
+.header-bar.simple .corner-brand img { width:28px; height:28px; border-radius:6px; }
+.header-bar.simple .brand-zh { font-size:14px; }
+.header-bar.simple .brand-en { font-size:12px; }
+
+/* 讓右側群組靠右，整列單行呈現 */
+.header-bar.simple .cart-group { margin-left:auto; }
