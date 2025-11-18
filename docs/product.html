@@ -41,7 +41,8 @@
 
   <script type="module">
   import {
-    initProducts, PRODUCTS, setCart, getCart, addToCartById, pushRecent
+    initProducts, PRODUCTS, setCart, getCart,
+    addToCartById, pushRecent, setupDrawer
   } from './assets/app.js?v=8';
 
   await initProducts('1BDw71gFOYp0e2kqOZFkfbV5v1dgC99kgwUEaHwjvxTk','商品');
@@ -254,6 +255,7 @@
       // 之後如果要「選項 + 價格 + 顯示在購物車」，再一起改 app.js
     });
   }
+  setupDrawer();
 </script>
 
 
