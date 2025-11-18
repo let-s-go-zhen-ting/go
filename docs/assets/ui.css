@@ -137,3 +137,17 @@ main{ flex:1 }
 
 /* 讓右側群組靠右，整列單行呈現 */
 .header-bar.simple .cart-group { margin-left:auto; }
+
+/* 覆蓋一下 header-bar，強制整條排成一行不換行 */
+.header-bar{
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+
+/* 中間的標題可以伸縮，避免把右邊擠掉 */
+.header-bar .page-title.sm{
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
