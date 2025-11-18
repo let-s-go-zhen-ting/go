@@ -151,3 +151,10 @@ main{ flex:1 }
   text-overflow: ellipsis;
 }
 
+/* 讓商品名稱置中且變黑色（只影響 product.html 用到的 simple header） */
+.header-bar.simple .page-title.sm {
+  flex: 1;
+  text-align: center;   /* 置中 */
+  color: #000;          /* 黑色 */
+  font-weight: 700;
+}
