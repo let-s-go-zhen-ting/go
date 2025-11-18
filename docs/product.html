@@ -13,32 +13,31 @@
 
 </head>
 <body>
-  <div class="top-shell">
-    <div class="corner-brand">
+  <div class="header-bar simple">
+    <!-- 左邊：啦此購 logo（點它回首頁） -->
+    <a class="corner-brand" href="index.html">
       <img src="favicon.png" alt="logo">
       <div>
         <div class="brand-zh">啦此購</div>
         <div class="brand-en">Let's Go！！！</div>
       </div>
+    </a>
+
+    <!-- 中間：上一頁 + 商品名 -->
+    <button class="btn sm secondary" type="button"
+            onclick="history.back();">
+      ← 上一頁
+    </button>
+
+    <h1 class="page-title sm" id="title">商品</h1>
+
+    <!-- 右邊：購物車／結帳 + 數量 + 我 -->
+    <div class="cart-group">
+      <a href="checkout.html" class="btn sm secondary">購物車/結帳</a>
+      <span class="badge" id="cartCount">0</span>
+      <a href="me.html" class="btn sm secondary">我</a>
     </div>
-
-    <header class="page-header">
-      <!-- 這裡字改成「上一頁」 -->
-      <a class="btn secondary" href="#" onclick="history.back();return false;">上一頁</a>
-      <h1 id="title">商品</h1>
-
-      <div class="cart-group">
-
-  <a href="checkout.html" class="btn secondary">購物車/結帳</a>
-  <span class="badge" id="cartCount">0</span>
-</div>
-<button id="avatarBtn" class="avatar" aria-label="開啟個人選單">我</button>
-      </div>
-    </header>
   </div>
-
-</header>
-
 
   <main>
   <section id="box">載入中…</section>
