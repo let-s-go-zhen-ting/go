@@ -6,11 +6,27 @@
   <title>商品詳情</title>
   <link rel="stylesheet" href="assets/ui.css">
   <style>
+  .top-shell{
+    position:sticky;     /* 黏在最上面 */
+    top:0;
+    z-index:40;
+    background:#fff;
+    padding:8px 16px 4px;
+  }
+
+  /* 讓 corner-brand 不再飄在左上角，而是跟 header 排在一起 */
+  .top-shell .corner-brand{
+    position:static;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-bottom:4px;
+  }
+
   .page-header{
     display:flex;
     align-items:center;
     gap:12px;
-    margin-bottom:16px;
   }
   .page-header h1{
     margin:0;
@@ -26,29 +42,37 @@
   }
 </style>
 
+
   <!-- Favicon / PWA icons -->
 <link rel="icon" type="image/png" href="favicon.png?v=2">
 <link rel="apple-touch-icon" href="apple-touch-icon.png?v=2">
 
 </head>
 <body>
-  <div class="corner-brand">
-    <img src="favicon.png" alt="logo">
-    <div>
-    <div class="brand-zh">啦此購</div>
-    <div class="brand-en">Let's Go！！！</div>
+  <div class="top-shell">
+    <div class="corner-brand">
+      <img src="favicon.png" alt="logo">
+      <div>
+        <div class="brand-zh">啦此購</div>
+        <div class="brand-en">Let's Go！！！</div>
+      </div>
     </div>
-  </div>
-  
-  <header class="page-header">
-  <a class="btn secondary" href="index.html">← 回商店</a>
 
-  <h1 id="title">商品</h1>
+    <header class="page-header">
+      <!-- 這裡字改成「上一頁」 -->
+      <a class="btn secondary" href="#" onclick="history.back();return false;">上一頁</a>
+      <h1 id="title">商品</h1>
 
-  <div class="cart-area">
-    <a href="checkout.html" class="btn secondary">購物車/結帳</a>
-    <span class="badge" id="cartCount">0</span>
+      <div class="cart-group">
+
+  <a href="checkout.html" class="btn secondary">購物車/結帳</a>
+  <span class="badge" id="cartCount">0</span>
+</div>
+<button id="avatarBtn" class="avatar" aria-label="開啟個人選單">我</button>
+      </div>
+    </header>
   </div>
+
 </header>
 
 
