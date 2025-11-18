@@ -60,29 +60,56 @@
     const desc = p.desc ? `<div style="white-space:pre-wrap;margin-top:8px">${p.desc}</div>` : '';
 
     box.innerHTML = `
-      <div class="row" style="gap:16px; align-items:flex-start; flex-wrap:wrap">
-        <div style="flex:1; min-width:280px">
-          ${p.image ? `<img src="${p.image}" alt="${p.title}" style="width:100%;border-radius:12px;object-fit:cover;aspect-ratio:1/1;">` : ''}
-        </div>
-        <div style="flex:1; min-width:260px">
-          <h2 style="margin:0 0 8px 0">${p.title} ${badges}</h2>
-          ${eta}
-          <div class="small" style="margin-bottom:6px">分類：${p.category || '其他'}</div>
-          <div style="font-size:20px; font-weight:700; margin:8px 0">NT$ ${fmt(p.price)}</div>
-          <div style="margin:6px 0">
-            ${(p.stock ?? 0) > 0
-              ? `<span class="badge">庫存 ${p.stock}</span>`
-              : `<span class="badge" style="border-color:#b91c1c;color:#b91c1c">缺貨</span>`
-            }
-          </div>
-          <div class="row" style="margin-top:12px">
-            <button class="btn" id="addBtn" ${(p.stock ?? 0) <= 0 ? 'disabled' : ''}>加入購物車</button>
-            <a class="btn secondary" href="checkout.html">前往結帳</a>
-          </div>
-          ${desc}
+  <div class="row" style="gap:16px; align-items:flex-start; flex-wrap:wrap">
+    <div style="flex:1; min-width:280px">
+      ${p.image ? `<img src="${p.image}" alt="${p.title}" style="width:100%;border-radius:12px;object-fit:cover;aspect-ratio:1/1;">` : ''}
+    </div>
+
+    <div style="flex:1; min-width:260px">
+      <h2 style="margin:0 0 8px 0">
+        ${p.title}
+        ${p.isNew ? '<span class="badge new">NEW</span>' : ''}
+        ${p.isPreorder ? '<span class="badge preorder">預購</span>' : ''}
+      </h2>
+      ${p.isPreorder && p.eta ? `<div class="small" style="margin-bottom:4px">預計出貨：${p.eta}</div>` : ''}
+      <div class="small" style="margin-bottom:6px">分類：${p.category || '其他'}</div>
+
+      <!-- 單價 -->
+      <div style="font-size:20px; font-weight:700; margin:8px 0">
+        單價 NT$ <span id="unitPrice">0</span>
+      </div>
+
+      <!-- 動態選項會插到這裡 -->
+      <div id="optBox" style="margin:8px 0"></div>
+
+      <!-- 數量 + 小計 -->
+      <div class="row" style="align-items:center;margin-top:8px">
+        <button class="btn secondary" id="qtyMinus" type="button">－</button>
+        <input id="qtyInput" class="input" type="number" value="1" min="1" step="1" style="width:80px;text-align:center">
+        <button class="btn secondary" id="qtyPlus" type="button">＋</button>
+        <div style="margin-left:auto;font-weight:700">
+          小計 NT$ <span id="subtotal">0</span>
         </div>
       </div>
-    `;
+
+      <!-- 庫存狀態 -->
+      <div style="margin:6px 0">
+        ${(p.stock ?? 0) > 0
+          ? `<span class="badge">庫存 ${p.stock}</span>`
+          : `<span class="badge" style="border-color:#b91c1c;color:#b91c1c">缺貨</span>`}
+      </div>
+
+      <!-- 按鈕 -->
+      <div class="row" style="margin-top:12px">
+        <button class="btn" id="addBtn" ${(p.stock ?? 0) <= 0 ? 'disabled' : ''}>加入購物車</button>
+        <a class="btn secondary" href="checkout.html">前往結帳</a>
+      </div>
+
+      ${desc}
+    </div>
+  </div>
+`;
+
 
     document.getElementById('addBtn')?.addEventListener('click', ()=>{
       addToCartById(p.id);
