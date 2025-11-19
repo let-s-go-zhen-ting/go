@@ -113,21 +113,27 @@
           <!-- 庫存：放在單價跟數量選擇中間，不要框框 -->
           <div id="stockText" class="small" style="margin:4px 0 8px 0"></div>
 
-          <!-- 數量 + 小計 -->
-          <div class="row" style="align-items:center;margin-top:4px">
-            <button class="btn secondary" id="qtyMinus" type="button">－</button>
-            <input id="qtyInput" class="input" type="number" value="1" min="1" step="1"
-                   style="width:80px;text-align:center">
-            <button class="btn secondary" id="qtyPlus" type="button">＋</button>
-            <div style="margin-left:auto;font-weight:700">
+                    <!-- 數量 + 小計 + 按鈕，全部同一行 -->
+          <div class="row" style="align-items:center;margin-top:8px;flex-wrap:wrap">
+
+            <!-- 數量選擇 -->
+            <div class="row" style="flex-wrap:nowrap;gap:8px">
+              <button class="btn secondary" id="qtyMinus" type="button">－</button>
+              <input id="qtyInput" class="input" type="number" value="1" min="1" step="1"
+                     style="width:80px;text-align:center">
+              <button class="btn secondary" id="qtyPlus" type="button">＋</button>
+            </div>
+
+            <!-- 小計：放在數量跟加入購物車中間 -->
+            <div style="font-weight:700;margin-left:12px;">
               小計 NT$ <span id="subtotal">0</span>
             </div>
-          </div>
 
-          <!-- 按鈕 -->
-          <div class="row" style="margin-top:12px">
-            <button class="btn" id="addBtn" ${stock <= 0 ? 'disabled' : ''}>加入購物車</button>
-            <a class="btn secondary" href="checkout.html">前往結帳</a>
+            <!-- 加入購物車 + 前往結帳：在最右邊 -->
+            <div class="row" style="margin-left:auto;flex-wrap:nowrap;gap:8px">
+              <button class="btn" id="addBtn" ${stock <= 0 ? 'disabled' : ''}>加入購物車</button>
+              <a class="btn secondary" href="checkout.html">前往結帳</a>
+            </div>
           </div>
 
           ${p.desc
@@ -137,6 +143,7 @@
         </div>
       </div>
     `;
+
 
     // ===== 下面是互動邏輯 =====
     const unitPriceEl = document.getElementById('unitPrice');
