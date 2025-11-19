@@ -175,9 +175,9 @@
   if (!raw) return;
 
   const parts = String(raw)
-    .split(/[\/,]/)
-    .map(s => s.trim())
-    .filter(Boolean);
+  .split(/[\/／,，\s]+/)   // 半形 / 、全形 ／、逗號 , ，和空白都會切
+  .map(s => s.trim())
+  .filter(Boolean);
 
   if (!parts.length) return;
 
