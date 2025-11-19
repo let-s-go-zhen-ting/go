@@ -129,11 +129,10 @@
               小計 NT$ <span id="subtotal">0</span>
             </div>
 
-            <!-- 加入購物車 + 前往結帳：在最右邊 -->
-            <div class="row" style="margin-left:auto;flex-wrap:nowrap;gap:8px">
-              <button class="btn" id="addBtn" ${stock <= 0 ? 'disabled' : ''}>加入購物車</button>
-              <a class="btn secondary" href="checkout.html">前往結帳</a>
-            </div>
+            <!-- 按鈕 -->
+          <div class="row" style="margin-top:12px">
+            <button class="btn" id="addBtn" ${stock <= 0 ? 'disabled' : ''}>加入購物車</button>
+            <a class="btn secondary" href="checkout.html">前往結帳</a>
           </div>
 
           ${p.desc
@@ -169,30 +168,32 @@
     let currentOption = null;
 
     function renderOptions() {
-      const raw = p.options || p.option || '';
-      if (!raw) return;
+  // 先硬塞一組，測試 UI
+  const raw = 'A版/B版/C版';
+  // const raw = p.options || p.option || '';
+  if (!raw) return;
 
-      const parts = String(raw)
-        .split(/[\/,]/)
-        .map(s => s.trim())
-        .filter(Boolean);
+  const parts = String(raw)
+    .split(/[\/,]/)
+    .map(s => s.trim())
+    .filter(Boolean);
 
-      if (!parts.length) return;
+  if (!parts.length) return;
 
-      optBox.innerHTML = `
-        <div class="small" style="margin-bottom:4px">選項：</div>
-        <div id="optionList"
-             class="row"
-             style="flex-wrap:wrap;gap:8px 8px;margin-top:4px">
-          ${parts.map((v, i) => `
-            <button type="button"
-                    class="btn secondary optBtn ${i === 0 ? 'is-active' : ''}"
-                    data-value="${v}">
-              ${v}
-            </button>
-          `).join('')}
-        </div>
-      `;
+  optBox.innerHTML = `
+    <div class="small" style="margin-bottom:4px">選項：</div>
+    <div id="optionList"
+         class="row"
+         style="flex-wrap:wrap;gap:8px 8px;margin-top:4px">
+      ${parts.map((v, i) => `
+        <button type="button"
+                class="btn secondary optBtn ${i === 0 ? 'is-active' : ''}"
+                data-value="${v}">
+          ${v}
+        </button>
+      `).join('')}
+    </div>
+  `;
 
       const btns = Array.from(optBox.querySelectorAll('.optBtn'));
       if (btns.length) {
