@@ -39,6 +39,8 @@ export async function initProducts(SPREADSHEET_ID, SHEET_NAME = '商品') {
       eta: String(obj.eta || '').trim(),
       desc: String(obj.desc || '').trim(),
       options: String(obj.options || '').trim(),
+      optionPrices: String(obj.optionPrices || '').trim(),
+      optionStocks: String(obj.optionStocks || '').trim()
 
     };
   }).filter(p => p.id && !p.isHidden);
