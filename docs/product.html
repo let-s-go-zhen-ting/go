@@ -53,13 +53,6 @@
   const p   = PRODUCTS.find(x => x.id === id);
   const box = document.getElementById('box');
 
-  console.log('id =', id);
-  console.log('p =', p);
-  console.log('title =', p?.title);
-  console.log('options raw =', JSON.stringify(p?.options));
-  console.log('keys =', Object.keys(p || {}));
-
-
   if (!p) {
     box.innerHTML = `<div class="small">找不到此商品（ID: ${id}）。</div>`;
   } else {
