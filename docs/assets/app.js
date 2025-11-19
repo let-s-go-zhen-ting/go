@@ -38,7 +38,7 @@ export async function initProducts(SPREADSHEET_ID, SHEET_NAME = '商品') {
       isPreorder: String(obj.isPreorder || '').toUpperCase() === 'TRUE',
       eta: String(obj.eta || '').trim(),
       desc: String(obj.desc || '').trim(),
-      options: obj.options || '',
+      options: String(obj.options || '').trim(),
 
     };
   }).filter(p => p.id && !p.isHidden);
