@@ -27,7 +27,19 @@
   <main>
     <section class="card">
       <h2>購物車</h2>
-      <table id="cartTable"><thead><tr><th>品名</th><th>數量</th><th>小計</th></tr></thead><tbody></tbody></table>
+      <table id="cartTable">
+  <thead>
+    <tr>
+      <th>品名</th>
+      <th>選項</th>
+      <th>單價</th>
+      <th>數量</th>
+      <th>小計</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
       <div style="text-align:right">總額：<strong id="total">NT$ 0</strong></div>
     </section>
 
@@ -94,19 +106,43 @@
 
     function getCart(){ return JSON.parse(localStorage.getItem('cart')||'[]'); }
 
-    function renderCart(){
-      const cart = getCart();
-      const body = document.querySelector('#cartTable tbody');
-      if (!cart.length) {
-        body.innerHTML = `<tr><td colspan="3">購物車是空的，回<a href="index.html">首頁</a>挑選商品吧！</td></tr>`;
-        document.getElementById('total').textContent = 'NT$ 0';
-        return { cart, total: 0 };
-      }
-      body.innerHTML = cart.map(i=>`<tr><td>${i.title}</td><td>${i.qty}</td><td>NT$ ${i.price*i.qty}</td></tr>`).join("");
-      const total = cart.reduce((s,i)=>s+i.price*i.qty,0);
-      document.getElementById('total').textContent = 'NT$ '+total;
-      return { cart, total };
-    }
+function renderCart(){
+  const cart = getCart();
+  const body = document.querySelector('#cartTable tbody');
+
+  const fmt = n => Number(n || 0).toLocaleString('zh-Hant-TW');
+
+  if (!cart.length) {
+    body.innerHTML = `
+      <tr>
+        <td colspan="5">
+          購物車是空的，回 <a href="index.html">首頁</a> 挑選商品吧！
+        </td>
+      </tr>`;
+    document.getElementById('total').textContent = 'NT$ 0';
+    return { cart, total: 0 };
+  }
+
+  body.innerHTML = cart.map(i => {
+    const lineTotal = (Number(i.price || 0) * Number(i.qty || 0)) || 0;
+    const optionText = i.option ? i.option : '';   // 有選項顯示，沒有就空白
+
+    return `
+      <tr>
+        <td>${i.title}</td>
+        <td>${optionText}</td>
+        <td>NT$ ${fmt(i.price)}</td>
+        <td>${i.qty}</td>
+        <td>NT$ ${fmt(lineTotal)}</td>
+      </tr>
+    `;
+  }).join("");
+
+  const total = cart.reduce((s,i)=> s + Number(i.price || 0) * Number(i.qty || 0), 0);
+  document.getElementById('total').textContent = 'NT$ ' + fmt(total);
+  return { cart, total };
+}
+
     renderCart();
 
     document.getElementById('phone').addEventListener('input', (e) => {
@@ -155,15 +191,21 @@
       const uid = auth.currentUser.uid;
 
       const order = {
-        uid,
-        items: cart.map(i=>({ productId:i.id, title:i.title, qty:i.qty, priceSnapshot:i.price })),
-        amount: cart.reduce((s,i)=>s+i.price*i.qty,0),
-        paymentMethod: pm,
-        paymentStatus: "await_line",
-        shipmentStatus: "none",
-        receiver: { name, phone },
-        deliveryMethod,
-        deliveryDetails,
+  uid,
+  items: cart.map(i => ({
+    productId: i.id,
+    title: i.title,
+    qty: i.qty,
+    priceSnapshot: i.price,
+    option: i.option || ''   // ⭐ 把選項也一起存進訂單
+  })),
+  amount: cart.reduce((s,i)=> s + Number(i.price || 0) * Number(i.qty || 0), 0),
+  paymentMethod: pm,
+  paymentStatus: "await_line",
+  shipmentStatus: "none",
+  receiver: { name, phone },
+  deliveryMethod,
+  deliveryDetails,
 
          // ⬇️ 這段就是新增的進度欄位
         progress: {
