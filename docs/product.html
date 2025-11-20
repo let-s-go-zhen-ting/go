@@ -336,21 +336,25 @@ qtyInput?.addEventListener('input', () => {
 });
 
     // ------- 加入購物車 -------
-    buyNowBtn?.addEventListener('click', () => {
+buyNowBtn?.addEventListener('click', () => {
   const qty = clampQty(qtyInput.value);
-  if (qty <= 0) return; // 缺貨或數量 0 就不要動
+  if (qty <= 0) return;   // 缺貨或數量 0 就不要動
 
-  // 這裡做成「只用這次選的款式＋數量去結帳」→ 先清空購物車
+  // 1. 拿到原本購物車內容（不要清空）
+  const cart = getCart() || [];
 
-
+  // 2. 把這次選的這個商品，依照數量塞進去
   for (let i = 0; i < qty; i++) {
-    addToCartById(p.id);
+    cart.push(p.id);
   }
-  setCart(getCart());
 
-  // 跳到結帳頁
+  // 3. 寫回去，但不呼叫 addToCartById（避免觸發「已加入購物車」那種提示）
+  setCart(cart);
+
+  // 4. 直接去結帳頁
   location.href = 'checkout.html';
 });
+
 
   } // ← 這是 if (!p) 的 else 結尾
   setupDrawer();
