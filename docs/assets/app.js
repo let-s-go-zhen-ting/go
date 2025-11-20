@@ -37,6 +37,7 @@ export async function initProducts(SPREADSHEET_ID, SHEET_NAME = '商品') {
       isHidden: String(obj.isHidden || '').toUpperCase() === 'TRUE',
       isPreorder: String(obj.isPreorder || '').toUpperCase() === 'TRUE',
       eta: String(obj.eta || '').trim(),
+      deadline: String(obj.deadline || '').trim(),
       desc: String(obj.desc || '').trim(),
       options: String(obj.options || '').trim(),
       optionPrices: String(obj.optionPrices || '').trim(),
@@ -44,13 +45,6 @@ export async function initProducts(SPREADSHEET_ID, SHEET_NAME = '商品') {
 
     };
   }).filter(p => p.id && !p.isHidden);
-
-  PRODUCTS = list.length ? list : [
-    { id:'p1', title:'L 字鑰匙圈', price:120, category:'周邊', isNew:true,  stock:99 },
-    { id:'p2', title:'L Logo 貼紙包', price:80,  category:'周邊', isNew:false, stock:50 },
-    { id:'p3', title:'Let’s Go 手幅', price:180, category:'演出', isNew:true,  stock:20 },
-    { id:'p4', title:'應援手燈吊飾', price:220, category:'周邊', isNew:false, stock:0  },
-  ];
 }
 
 // === 購物車（localStorage） ===
@@ -110,6 +104,8 @@ export function renderCards(container, products){
   </div>
 
   ${p.isPreorder && p.eta ? `<div class="small">預計出貨：${p.eta}</div>` : ''}
+  ${p.deadline ? `<div class="small">結單時間：${p.deadline}</div>` : ''}
+
 
   <div class="sub">分類：${p.category||'其他'}　庫存：${p.stock ?? 0}</div>
   <div class="price">NT$ ${fmt(p.price)}</div>
