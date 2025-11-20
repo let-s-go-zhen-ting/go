@@ -104,7 +104,16 @@
       collection, doc, setDoc, runTransaction, serverTimestamp
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-    function getCart(){ return JSON.parse(localStorage.getItem('cart')||'[]'); }
+   const params = new URLSearchParams(location.search);
+const checkoutMode = params.get('mode') || 'cart';   // 'single' or 'cart'
+
+function getCart(){
+  if (checkoutMode === 'single') {
+    return JSON.parse(localStorage.getItem('checkoutSingle') || '[]');
+  }
+  return JSON.parse(localStorage.getItem('cart') || '[]');
+}
+
 
 function renderCart(){
   const cart = getCart();
@@ -254,8 +263,16 @@ function renderCart(){
         }
       } catch (_) {}
 
-      localStorage.removeItem('cart');
+            if (checkoutMode === 'single') {
+        // 單筆結帳：只清掉 checkoutSingle，不動購物車
+        localStorage.removeItem('checkoutSingle');
+      } else {
+        // 一般從購物車來的結帳：清 cart
+        localStorage.removeItem('cart');
+      }
+
       setTimeout(()=>{ window.location.href = `order.html?id=${orderId}`; }, 500);
+
       return;
     });
   </script>
