@@ -321,6 +321,7 @@ function updatePriceAndStock() {
     renderOptions();
 
     // ------- 數量 & 小計 -------
+// 減少數量
 qtyMinusBtn?.addEventListener('click', () => {
   if (currentMaxStock <= 0) return; // 缺貨直接無效
   let q = clampQty(qtyInput.value);
@@ -329,6 +330,7 @@ qtyMinusBtn?.addEventListener('click', () => {
   updateSubtotal();
 });
 
+// 增加數量
 qtyPlusBtn?.addEventListener('click', () => {
   if (currentMaxStock <= 0) return; // 缺貨直接無效
   let q = clampQty(qtyInput.value);
@@ -337,106 +339,87 @@ qtyPlusBtn?.addEventListener('click', () => {
   updateSubtotal();
 });
 
+// 手動輸入數量
 qtyInput?.addEventListener('input', () => {
   updateSubtotal();
 });
 
-// ------- 加入購物車：照舊，用 addToCartById，會跳 alert -------
-// ===== 加入購物車（商品詳情頁專用，處理選項不可重複） =====
-addBtn?.addEventListener('click', () => {
-  const qty = clampQty(qtyInput.value);
-  if (qty <= 0) return;
 
+// ===== 共用：依目前選項＋數量，檢查庫存後加到購物車 =====
+function addToCartWithStockCheck({ redirect = false } = {}) {
   const cart = getCart() || [];
-  const optName = getCurrentOptionName();   // 目前選到的選項名（朴成淏 / 李常赫 ... 或 ''）
 
-  // 如果這個商品有選項，而且同一個選項已經在購物車，就不能再加
-  if (optName) {
-    const exists = cart.find(
-      item => item.id === p.id && (item.option || '') === optName
-    );
-    if (exists) {
-      alert('這個選項已經在購物車裡，不能重複加入。');
-      return;
+  const optName   = getCurrentOptionName();          // 目前選到的選項名稱（或 ''）
+  const desiredQty = clampQty(qtyInput.value);       // 想要加入的數量（已依當前庫存上下限處理）
+
+  // 若目前是缺貨（currentMaxStock <= 0），直接擋掉
+  if (currentMaxStock <= 0) {
+    alert('這個選項目前缺貨，無法加入購物車');
+    return false;
+  }
+  if (desiredQty <= 0) return false;
+
+  // 判斷「同一商品 + 同一選項」在購物車內已經有多少
+  const keyMatch = (item) =>
+    item.id === p.id && (item.option || '') === (optName || '');
+
+  const alreadyInCart = cart.reduce((sum, item) => {
+    if (keyMatch(item)) {
+      return sum + Number(item.qty || 0);
+    }
+    return sum;
+  }, 0);
+
+  // 該選項最大可用庫存 = currentMaxStock
+  // 若沒填任何庫存（Infinity），就當不限量
+  if (Number.isFinite(currentMaxStock)) {
+    if (alreadyInCart + desiredQty > currentMaxStock) {
+      alert(`購物車內這個選項的數量已達庫存上限（庫存 ${currentMaxStock}，目前已在購物車 ${alreadyInCart} 件）。`);
+      return false;
     }
   }
 
-  // 沒選項的商品：沿用原本加數量邏輯
-  if (!optName) {
-    const idx = cart.findIndex(item => item.id === p.id && !item.option);
-    if (idx >= 0) {
-      cart[idx].qty += qty;
-    } else {
-      cart.push({
-        id: p.id,
-        title: p.title,
-        price: Number(currentUnitPrice || p.price || 0),
-        qty,
-        option: ''   // 沒選項就留空
-      });
-    }
+  // 寫進購物車：有就加 qty，沒有就新增一筆
+  const idx = cart.findIndex(keyMatch);
+  if (idx >= 0) {
+    cart[idx].qty = Number(cart[idx].qty || 0) + desiredQty;
   } else {
-    // 有選項，而且還沒在購物車 → 新增一筆，qty 依照畫面選的
     cart.push({
       id: p.id,
-      title: p.title + ' - ' + optName,  // 顯示上可以帶選項名
+      title: p.title,
       price: Number(currentUnitPrice || p.price || 0),
-      qty,
-      option: optName
+      qty: desiredQty,
+      option: optName || ''   // 有選項就記，沒有就空字串
     });
   }
 
-  setCart(cart);
-  alert('已加入購物車');   // 詳情頁自己跳提示，不用走 addToCartById
+  setCart(cart); // 更新 localStorage + 右上角數字
+
+  if (redirect) {
+    // 「前往結帳」：不顯示「已加入購物車」，直接去結帳頁
+    location.href = 'checkout.html';
+  }
+
+  return true;
+}
+
+
+// ------- 加入購物車：要檢查庫存 + 購物車內數量 -------
+// （成功才跳「已加入購物車」，失敗就不動）
+addBtn?.addEventListener('click', () => {
+  const ok = addToCartWithStockCheck({ redirect: false });
+  if (ok) {
+    alert('已加入購物車');
+  }
 });
 
 
-// ===== 前往結帳（不跳「已加入購物車」，而且同選項只能有一筆） =====
+// ------- 前往結帳：同樣檢查庫存，不跳 alert，成功就直接去結帳 ------- 
 buyNowBtn?.addEventListener('click', () => {
-  const qty = clampQty(qtyInput.value);
-  if (qty <= 0) return;
-
-  const cart = getCart() || [];
-  const optName = getCurrentOptionName();
-
-  if (optName) {
-    const exists = cart.find(
-      item => item.id === p.id && (item.option || '') === optName
-    );
-    if (exists) {
-      // 已經有這個選項了 → 不再加數量，直接去結帳
-      location.href = 'checkout.html';
-      return;
-    }
+  const ok = addToCartWithStockCheck({ redirect: false });
+  if (ok) {
+    location.href = 'checkout.html';
   }
-
-  if (!optName) {
-    // 沒選項：沿用舊邏輯
-    const idx = cart.findIndex(item => item.id === p.id && !item.option);
-    if (idx >= 0) {
-      cart[idx].qty += qty;
-    } else {
-      cart.push({
-        id: p.id,
-        title: p.title,
-        price: Number(currentUnitPrice || p.price || 0),
-        qty,
-        option: ''
-      });
-    }
-  } else {
-    // 有選項：新增一筆，之後就不能再加同選項
-    cart.push({
-      id: p.id,
-      title: p.title + ' - ' + optName,
-      price: Number(currentUnitPrice || p.price || 0),
-      qty,
-      option: optName
-    });
-  }
-
-  setCart(cart);
-  location.href = 'checkout.html';
 });
 
 
