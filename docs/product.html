@@ -86,9 +86,17 @@ let currentUnitPrice = Number(p.price || 0);
 let currentMaxStock  = (p.stock ?? 0) || 9999;
 
 function getCurrentOptionName() {
+  // 優先看 DOM 裡目前被選中的按鈕（.is-active）
+  const active = document.querySelector('#optBox .optBtn.is-active');
+  if (active) {
+    return (active.dataset.label || active.textContent || '').trim();
+  }
+
+  // 找不到 active 按鈕時，再退回用陣列＋ index
   if (!optionNames.length) return '';
   return optionNames[currentOptionIndex] || optionNames[0] || '';
 }
+
 
 
 
@@ -293,6 +301,7 @@ function updatePriceAndStock() {
             <button type="button"
                     class="btn secondary optBtn ${i === 0 ? 'is-active' : ''}"
                     data-index="${i}">
+                    data-label="${v}">
               ${v}
             </button>
           `).join('')}
