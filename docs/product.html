@@ -285,47 +285,47 @@ function updatePriceAndStock() {
 
 
     // ------- 選項：一個選項一個框框 -------
-    function renderOptions() {
-      // 如果沒有選項，就用全域價格/庫存初始化一次
-      if (!optionNames.length) {
-        updatePriceAndStock();
-        return;
-      }
+function renderOptions() {
+  if (!optionNames.length) {
+    updatePriceAndStock();
+    return;
+  }
 
-      optBox.innerHTML = `
-        <div class="small" style="margin-bottom:4px">選項：</div>
-        <div id="optionList"
-             class="row"
-             style="flex-wrap:wrap;gap:8px 8px;margin-top:4px">
-          ${optionNames.map((v, i) => `
-            <button type="button"
-                    class="btn secondary optBtn ${i === 0 ? 'is-active' : ''}"
-                    data-index="${i}">
-                    data-label="${v}">
-              ${v}
-            </button>
-          `).join('')}
-        </div>
-      `;
+  optBox.innerHTML = `
+    <div class="small" style="margin-bottom:4px">選項：</div>
+    <div id="optionList"
+         class="row"
+         style="flex-wrap:wrap;gap:8px 8px;margin-top:4px">
+      ${optionNames.map((v, i) => `
+        <button type="button"
+                class="btn secondary optBtn ${i === 0 ? 'is-active' : ''}"
+                data-index="${i}"
+                data-label="${v}">
+          ${v}
+        </button>
+      `).join('')}
+    </div>
+  `;
 
-      const btns = Array.from(optBox.querySelectorAll('.optBtn'));
-      if (btns.length) currentOptionIndex = 0;
+  const btns = Array.from(optBox.querySelectorAll('.optBtn'));
+  if (btns.length) currentOptionIndex = 0;
 
-      btns.forEach(btn => {
-        btn.addEventListener('click', () => {
-          const idx = Number(btn.dataset.index || 0);
-          currentOptionIndex = idx;
+  btns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = Number(btn.dataset.index || 0);
+      currentOptionIndex = idx;
 
-          btns.forEach(b => b.classList.remove('is-active'));
-          btn.classList.add('is-active');
+      btns.forEach(b => b.classList.remove('is-active'));
+      btn.classList.add('is-active');
 
-          updatePriceAndStock();
-        });
-      });
-
-      // 初始跑一次，套用第 0 個選項
       updatePriceAndStock();
-    }
+    });
+  });
+
+  // 初始套第一個
+  updatePriceAndStock();
+}
+
 
     renderOptions();
 
