@@ -336,7 +336,7 @@ qtyInput?.addEventListener('input', () => {
   if (qty <= 0) return; // 缺貨或數量 0 就不要動
 
   // 這裡做成「只用這次選的款式＋數量去結帳」→ 先清空購物車
-  setCart([]); // 如果你想保留原本購物車，就把這行刪掉
+
 
   for (let i = 0; i < qty; i++) {
     addToCartById(p.id);
