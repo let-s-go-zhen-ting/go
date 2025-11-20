@@ -22,29 +22,47 @@ export async function initProducts(SPREADSHEET_ID, SHEET_NAME = '商品') {
   const cols = json.table.cols.map(c => c.label);
   const rows = json.table.rows || [];
 
-  const list = rows.map(r => {
-    const obj = {};
-    r.c.forEach((cell, i) => obj[cols[i]] = cell ? cell.v : '');
-    return {
-      id: String(obj.id || '').trim(),
-      title: String(obj.title || '').trim(),
-      price: Number(obj.price || 0),
-      origin: String(obj.origin||'').trim(),
-      category: String(obj.category || '').trim() || '其他',
-      isNew: String(obj.isNew || '').toUpperCase() === 'TRUE',
-      stock: Number(obj.stock || 0),
-      image: String(obj.image || '').trim(),
-      isHidden: String(obj.isHidden || '').toUpperCase() === 'TRUE',
-      isPreorder: String(obj.isPreorder || '').toUpperCase() === 'TRUE',
-      eta: String(obj.eta || '').trim(),
-      deadline: String(obj.deadline || '').trim(),
-      desc: String(obj.desc || '').trim(),
-      options: String(obj.options || '').trim(),
-      optionPrices: String(obj.optionPrices || '').trim(),
-      optionStocks: String(obj.optionStocks || '').trim()
+const list = rows.map(r => {
+  const obj = {};
 
-    };
-  }).filter(p => p.id && !p.isHidden);
+  r.c.forEach((cell, i) => {
+    const key = cols[i];
+    if (!cell) {
+      obj[key] = '';
+      return;
+    }
+
+    // 對日期敏感的欄位（出貨日期 / 結單日期）優先用格式化字串 cell.f
+    if (key === 'eta' || key === 'deadline') {
+      obj[key] = (cell.f ?? cell.v ?? '');
+    } else {
+      obj[key] = (cell.v ?? '');
+    }
+  });
+
+  return {
+    id: String(obj.id || '').trim(),
+    title: String(obj.title || '').trim(),
+    price: Number(obj.price || 0),
+    origin: String(obj.origin||'').trim(),
+    category: String(obj.category || '').trim() || '其他',
+    isNew: String(obj.isNew || '').toUpperCase() === 'TRUE',
+    stock: Number(obj.stock || 0),
+    image: String(obj.image || '').trim(),
+    isHidden: String(obj.isHidden || '').toUpperCase() === 'TRUE',
+    isPreorder: String(obj.isPreorder || '').toUpperCase() === 'TRUE',
+
+    // 這兩個現在就會是你在試算表看到的字，不會再亂跑月份
+    eta: String(obj.eta || '').trim(),
+    deadline: String(obj.deadline || '').trim(),
+
+    desc: String(obj.desc || '').trim(),
+    options: String(obj.options || '').trim(),
+    optionPrices: String(obj.optionPrices || '').trim(),
+    optionStocks: String(obj.optionStocks || '').trim()
+  };
+}).filter(p => p.id && !p.isHidden);
+
 
   PRODUCTS = list;
 }
