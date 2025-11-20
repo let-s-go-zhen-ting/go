@@ -5,139 +5,141 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Let's Go！！！｜首頁</title>
   <link rel="stylesheet" href="assets/ui.css?v=4">
-  <!-- Favicon / PWA icons -->
-<link rel="icon" type="image/png" href="favicon.png?v=2">
-<link rel="apple-touch-icon" href="apple-touch-icon.png?v=2">
 
+  <!-- Favicon / PWA icons -->
+  <link rel="icon" type="image/png" href="favicon.png?v=2">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png?v=2">
 </head>
 <body>
-  <!-- 頂部：左上頭貼 → 開啟側拉；右側是購物車 -->
+  <!-- 頂部：左品牌 + 中間搜尋 + 右購物車 + 我 -->
   <header class="header-bar">
-  <!-- 左：品牌 -->
-  <a href="index.html" class="corner-brand" aria-label="首頁">
-    <img src="favicon.png" alt="logo">
-    <div>
-      <div class="brand-zh">啦此購</div>
-      <div class="brand-en">Let's Go！！！</div>
+    <!-- 左：品牌 -->
+    <a href="index.html" class="corner-brand" aria-label="首頁">
+      <img src="favicon.png" alt="logo">
+      <div>
+        <div class="brand-zh">啦此購</div>
+        <div class="brand-en">Let's Go！！！</div>
+      </div>
+    </a>
+
+    <!-- 中：搜尋 + 三個下拉 -->
+    <input id="search" class="search flex1" placeholder="搜尋商品…">
+    <select id="origin"   class="select">
+      <option value="ALL">Artist</option>
+      <option>TOMORROW X TOGETHER</option>
+      <option>BOYNEXTDOOR</option>
+      <option>TWS</option>
+    </select>
+    <select id="category" class="select">
+      <option value="default">全部類型</option>
+      <option>專輯</option>
+      <option>手燈</option>
+      <option>周邊</option>
+      <option>回憶錄</option>
+      <option>DECO KIT</option>
+      <option>會員</option>
+      <option>年曆</option>
+    </select>
+    <select id="filter"   class="select">
+      <option value="all">全部商品</option>
+      <option value="new">新上架</option>
+      <option value="instock">有庫存</option>
+    </select>
+
+    <!-- 右：購物車 + 我 -->
+    <div class="cart-group">
+      <a href="checkout.html" class="btn secondary">購物車/結帳</a>
+      <span class="badge" id="cartCount">0</span>
     </div>
-  </a>
+    <button id="avatarBtn" class="avatar" aria-label="開啟個人選單">我</button>
+  </header>
 
-  <!-- 中：搜尋 + 三個下拉 -->
-  <input id="search" class="search flex1" placeholder="搜尋商品…">
-  <select id="origin"   class="select"><option value="ALL">Artist</option><option>TOMORROW X TOGETHER</option><option>BOYNEXTDOOR</option><option>TWS</option></select>
-  <select id="category" class="select"><option value="default">全部類型</option><option>專輯</option><option>手燈</option><option>周邊</option><option>回憶錄</option><option>DECO KIT</option><option>會員</option><option>年曆</option></select>
-  <select id="filter"   class="select"><option value="all">全部商品</option><option value="new">新上架</option><option value="instock">有庫存</option></select>
+  <main>
+    <!-- 只有「全部商品」 -->
+    <section class="card">
+      <h2>全部商品</h2>
+      <div id="allGrid" class="grid list"></div>
+    </section>
 
-  <!-- 右：購物車 + 頭貼 -->
- <div class="cart-group">
+    <!-- 側拉抽屜 -->
+    <div id="drawerMask"></div>
+    <aside id="drawer" aria-label="個人側拉面板">
+      <div id="drawerProfile"><!-- JS 會把內容塞進來 --></div>
+    </aside>
+  </main>
 
-  <a href="checkout.html" class="btn secondary">購物車/結帳</a>
-  <span class="badge" id="cartCount">0</span>
-</div>
-<button id="avatarBtn" class="avatar" aria-label="開啟個人選單">我</button>
+  <!-- JS 邏輯 -->
+  <script type="module">
+    import {
+      setCart, getCart, renderCards,
+      filterProducts, setupDrawer, initProducts, PRODUCTS
+    } from './assets/app.js?v=8';
 
-</header>
+    // 先抓試算表，再渲染
+    await initProducts('1BDw71gFOYp0e2kqOZFkfbV5v1dgC99kgwUEaHwjvxTk','商品');
 
+    // DOM
+    const allGrid    = document.getElementById('allGrid');
 
-<main>
-  
-  <!-- 全部商品（支援搜尋與分類） -->
-  <section class="card">
-    <h2>全部商品</h2>
-    <div id="allGrid" class="grid list"></div>
-  </section>
+    const search     = document.getElementById('search');
+    const originSel  = document.getElementById('origin');
+    const category   = document.getElementById('category');
+    const filterSel  = document.getElementById('filter');
 
-  <!-- 側拉抽屜 -->
-  <div id="drawerMask"></div>
-<aside id="drawer" aria-label="個人側拉面板">
-  <div id="drawerProfile"><!-- JS 會把內容塞進來 --></div>
-</aside>
+    // 購物車徽章
+    setCart(getCart());
 
+    // 依目前 UI 條件過濾任一清單
+    function filterByUI(list){
+      const org = originSel?.value || 'ALL';
+      const cat = category?.value || 'default';
+      const f   = filterSel?.value || 'all';
 
-<script type="module">
-  import {
-    setCart, getCart, renderCards,
-    filterProducts, setupDrawer, initProducts, PRODUCTS
-  } from './assets/app.js?v=3';
+      let out = list;
 
-  // 先抓試算表，再渲染
-  await initProducts('1BDw71gFOYp0e2kqOZFkfbV5v1dgC99kgwUEaHwjvxTk','商品');
+      if (org !== 'ALL')     out = out.filter(p => (p.origin === org));
+      if (cat !== 'default') out = out.filter(p => (p.category === cat));
+      if (f === 'new')       out = out.filter(p => p.isNew);
+      if (f === 'instock')   out = out.filter(p => (p.stock ?? 0) > 0);
 
-  // DOM
-  const allGrid    = document.getElementById('allGrid');
+      const kw = (search?.value || '').trim().toLowerCase();
+      if (kw) out = out.filter(p => (p.title || '').toLowerCase().includes(kw));
 
-  const search     = document.getElementById('search');
-  const originSel  = document.getElementById('origin');   // 韓團 / 中國 / ALL
-  const category   = document.getElementById('category'); // 演唱會 / 回憶錄 / default
-  const filterSel  = document.getElementById('filter');   // all / new / instock
+      return out;
+    }
 
-  // 購物車徽章
-  setCart(getCart());
+    function rerender(){
+      renderCards(allGrid, filterByUI(PRODUCTS));
+    }
 
-  // 依目前 UI 條件過濾任一清單
-  function filterByUI(list){
-    const org = originSel?.value || 'ALL';
-    const cat = category?.value || 'default';
-    const f   = filterSel?.value || 'all';
+    // 綁事件
+    search?.addEventListener('input', rerender);
+    originSel?.addEventListener('change', rerender);
+    category?.addEventListener('change', rerender);
+    filterSel?.addEventListener('change', rerender);
 
-    let out = list;
-
-    // origin（需要 PRODUCTS 物件有 p.origin 欄位；沒有就先略過或到 app.js 加上對應欄位）
-    if (org !== 'ALL') out = out.filter(p => (p.origin === org));
-
-    // category：預設值 "default" 代表不篩
-    if (cat !== 'default') out = out.filter(p => (p.category === cat));
-
-    if (f === 'new')     out = out.filter(p => p.isNew);
-    if (f === 'instock') out = out.filter(p => (p.stock ?? 0) > 0);
-
-    // 搜尋
-    const kw = (search?.value || '').trim().toLowerCase();
-    if (kw) out = out.filter(p => (p.title || '').toLowerCase().includes(kw));
-
-    return out;
-  }
-
-  function rerender(){
-    // 全部商品
-    renderCards(allGrid, filterByUI(PRODUCTS));
-
-  // 綁事件（只綁存在的元素）
-  search?.addEventListener('input', rerender);
-  originSel?.addEventListener('change', rerender);
-  category?.addEventListener('change', rerender);
-  filterSel?.addEventListener('change', rerender);
-
-  // 首次渲染 + 側拉
-  rerender();
-  setupDrawer();
-</script>
-  
-  <div id="drawerMask"></div>
-<aside id="drawer" aria-label="個人側拉面板">
-  <div id="drawerProfile"><!-- JS 會把內容塞進來 --></div>
-</aside>
-
-</main>
+    // 首次渲染 + 側拉
+    rerender();
+    setupDrawer();
+  </script>
 
   <footer class="site-footer">
-  <div class="row" style="justify-content:space-between">
-    <div>
-      <strong>客服資訊</strong><br>
-      Email：<a href="mailto:letsgozhenting@gmail.com">letsgozhenting@gmail.com</a><br>
-      LINE：<a href="https://lin.ee/305cGr5" target="_blank" rel="noopener">https://lin.ee/305cGr5</a><br>
-      FB：<a href="https://www.facebook.com/share/17UF5BshaN/" target="_blank" rel="noopener">Facebook</a><br>
-      IG：<a href="https://www.instagram.com/letsgo.zhen.ting?igsh=YmM3NTU2aHllMWl2" target="_blank" rel="noopener">@letsgo.zhen.ting</a>
+    <div class="row" style="justify-content:space-between">
+      <div>
+        <strong>客服資訊</strong><br>
+        Email：<a href="mailto:letsgozhenting@gmail.com">letsgozhenting@gmail.com</a><br>
+        LINE：<a href="https://lin.ee/305cGr5" target="_blank" rel="noopener">https://lin.ee/305cGr5</a><br>
+        FB：<a href="https://www.facebook.com/share/17UF5BshaN/" target="_blank" rel="noopener">Facebook</a><br>
+        IG：<a href="https://www.instagram.com/letsgo.zhen.ting?igsh=YmM3NTU2aHllMWl2" target="_blank" rel="noopener">@letsgo.zhen.ting</a>
+      </div>
+      <nav>
+        <a href="privacy.html">隱私權條款</a> <span class="sep">｜</span>
+        <a href="consumer-rights.html">消費者權益</a> <span class="sep">｜</span>
+        <a href="tos.html">會員服務條款</a> <span class="sep">｜</span>
+        <a href="returns.html">退換貨方式</a>
+      </nav>
     </div>
-    <nav>
-      <a href="privacy.html">隱私權條款</a> <span class="sep">｜</span>
-      <a href="consumer-rights.html">消費者權益</a> <span class="sep">｜</span>
-      <a href="tos.html">會員服務條款</a> <span class="sep">｜</span>
-      <a href="returns.html">退換貨方式</a>
-    </nav>
-  </div>
-  <div style="margin-top:8px;color:#9ca3af">© 2025 啦此購</div>
-</footer>
-
+    <div style="margin-top:8px;color:#9ca3af">© 2025 啦此購</div>
+  </footer>
 </body>
 </html>
