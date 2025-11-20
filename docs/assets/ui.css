@@ -165,3 +165,16 @@ main{ flex:1 }
   color:#fff;             /* 白字 */
   border-color:#111;      /* 邊框跟著變黑 */
 }
+
+/* 首頁「全部商品」那一塊不要外框、不要白底 */
+.card.card-all{
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin-top: 12px;   /* 看你要不要留一點上方空隙 */
+}
+
+/* 讓商品卡片自己撐開就好，避免多一圈空白 */
+.card.card-all .grid{
+  margin-top: 0;
+}
