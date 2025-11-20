@@ -85,6 +85,12 @@ let currentOptionIndex = 0;
 let currentUnitPrice = Number(p.price || 0);
 let currentMaxStock  = (p.stock ?? 0) || 9999;
 
+function getCurrentOptionName() {
+  if (!optionNames.length) return '';
+  return optionNames[currentOptionIndex] || optionNames[0] || '';
+}
+
+
 
     box.innerHTML = `
       <div style="display:flex;flex-direction:column-reverse;gap:16px">
@@ -336,44 +342,100 @@ qtyInput?.addEventListener('input', () => {
 });
 
 // ------- 加入購物車：照舊，用 addToCartById，會跳 alert -------
+// ===== 加入購物車（商品詳情頁專用，處理選項不可重複） =====
 addBtn?.addEventListener('click', () => {
   const qty = clampQty(qtyInput.value);
   if (qty <= 0) return;
 
-  for (let i = 0; i < qty; i++) {
-    addToCartById(p.id);   // 這顆照舊有「已加入購物車」提示
-  }
-});
-
-// ------- 前往結帳：不呼叫 addToCartById，不清空購物車，不跳 alert -------
-buyNowBtn?.addEventListener('click', () => {
-  const qty = clampQty(qtyInput.value);
-  if (qty <= 0) return;   // 缺貨或 0 直接不動
-
-  // 1. 拿原本購物車內容
   const cart = getCart() || [];
+  const optName = getCurrentOptionName();   // 目前選到的選項名（朴成淏 / 李常赫 ... 或 ''）
 
-  // 2. 找看看 cart 裡面有沒有這個商品
-  const idx = cart.findIndex(item => item.id === p.id);
+  // 如果這個商品有選項，而且同一個選項已經在購物車，就不能再加
+  if (optName) {
+    const exists = cart.find(
+      item => item.id === p.id && (item.option || '') === optName
+    );
+    if (exists) {
+      alert('這個選項已經在購物車裡，不能重複加入。');
+      return;
+    }
+  }
 
-  if (idx >= 0) {
-    // 已存在 → 直接加數量
-    cart[idx].qty += qty;
+  // 沒選項的商品：沿用原本加數量邏輯
+  if (!optName) {
+    const idx = cart.findIndex(item => item.id === p.id && !item.option);
+    if (idx >= 0) {
+      cart[idx].qty += qty;
+    } else {
+      cart.push({
+        id: p.id,
+        title: p.title,
+        price: Number(currentUnitPrice || p.price || 0),
+        qty,
+        option: ''   // 沒選項就留空
+      });
+    }
   } else {
-    // 不存在 → 新增一筆
+    // 有選項，而且還沒在購物車 → 新增一筆，qty 依照畫面選的
     cart.push({
       id: p.id,
-      title: p.title,
-      // 用 currentUnitPrice 可以吃到選項價格，沒有選項就 fallback 到商品 price
+      title: p.title + ' - ' + optName,  // 顯示上可以帶選項名
       price: Number(currentUnitPrice || p.price || 0),
-      qty: qty
+      qty,
+      option: optName
     });
   }
 
-  // 3. 寫回購物車（這裡不 alert）
   setCart(cart);
+  alert('已加入購物車');   // 詳情頁自己跳提示，不用走 addToCartById
+});
 
-  // 4. 直接去結帳頁
+
+// ===== 前往結帳（不跳「已加入購物車」，而且同選項只能有一筆） =====
+buyNowBtn?.addEventListener('click', () => {
+  const qty = clampQty(qtyInput.value);
+  if (qty <= 0) return;
+
+  const cart = getCart() || [];
+  const optName = getCurrentOptionName();
+
+  if (optName) {
+    const exists = cart.find(
+      item => item.id === p.id && (item.option || '') === optName
+    );
+    if (exists) {
+      // 已經有這個選項了 → 不再加數量，直接去結帳
+      location.href = 'checkout.html';
+      return;
+    }
+  }
+
+  if (!optName) {
+    // 沒選項：沿用舊邏輯
+    const idx = cart.findIndex(item => item.id === p.id && !item.option);
+    if (idx >= 0) {
+      cart[idx].qty += qty;
+    } else {
+      cart.push({
+        id: p.id,
+        title: p.title,
+        price: Number(currentUnitPrice || p.price || 0),
+        qty,
+        option: ''
+      });
+    }
+  } else {
+    // 有選項：新增一筆，之後就不能再加同選項
+    cart.push({
+      id: p.id,
+      title: p.title + ' - ' + optName,
+      price: Number(currentUnitPrice || p.price || 0),
+      qty,
+      option: optName
+    });
+  }
+
+  setCart(cart);
   location.href = 'checkout.html';
 });
 
