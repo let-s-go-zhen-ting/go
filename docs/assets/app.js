@@ -45,6 +45,8 @@ export async function initProducts(SPREADSHEET_ID, SHEET_NAME = '商品') {
 
     };
   }).filter(p => p.id && !p.isHidden);
+
+  PRODUCTS = list;
 }
 
 // === 購物車（localStorage） ===
