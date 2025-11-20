@@ -336,22 +336,44 @@ qtyInput?.addEventListener('input', () => {
 });
 
     // ------- 加入購物車 -------
+// 加入購物車（照舊，會跳「已加入購物車」）
+addBtn?.addEventListener('click', () => {
+  const qty = clampQty(qtyInput.value);
+  if (qty <= 0) return;
+
+  for (let i = 0; i < qty; i++) {
+    addToCartById(p.id);   // 這顆照舊用 addToCartById，保留 alert
+  }
+});
+
+// 前往結帳：不清空購物車、不呼叫 addToCartById、不跳 alert
 buyNowBtn?.addEventListener('click', () => {
   const qty = clampQty(qtyInput.value);
   if (qty <= 0) return;   // 缺貨或數量 0 就不要動
 
-  // 1. 拿到原本購物車內容（不要清空）
+  // 1. 拿原本購物車（保持裡面的東西）
   const cart = getCart() || [];
 
-  // 2. 把這次選的這個商品，依照數量塞進去
-  for (let i = 0; i < qty; i++) {
-    cart.push(p.id);
+  // 2. 找看看購物車裡有沒有這個商品
+  const idx = cart.findIndex(item => item.id === p.id);
+
+  if (idx >= 0) {
+    // 已經在購物車裡 → 直接加數量
+    cart[idx].qty += qty;
+  } else {
+    // 不在購物車裡 → 新增一筆
+    cart.push({
+      id: p.id,
+      title: p.title,
+      price: p.price,  // 用試算表的 price
+      qty: qty
+    });
   }
 
-  // 3. 寫回去，但不呼叫 addToCartById（避免觸發「已加入購物車」那種提示）
+  // 3. 寫回購物車（只更新，不跳 alert）
   setCart(cart);
 
-  // 4. 直接去結帳頁
+  // 4. 直接跳到結帳頁
   location.href = 'checkout.html';
 });
 
