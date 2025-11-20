@@ -62,9 +62,27 @@
     document.getElementById('title').textContent = p.title;
 
     const isNew      = !!p.isNew;
-    const isPreorder = !!p.isPreorder;
-    const stock      = (p.stock ?? 0);
-    const baseUnitPrice = Number(p.price || 0);
+const isPreorder = !!p.isPreorder;
+const stock      = (p.stock ?? 0);  // 之後 computeMaxStock 會用到
+
+// 共用：把 "A/B/C" 或 "A,B,C" 轉成 ["A","B","C"]
+const splitList = (raw) => String(raw || '')
+  .split(/[\/／,，]/)
+  .map(s => s.trim())
+  .filter(Boolean);
+
+// 三個對應陣列（從試算表欄位來）
+const optionNames  = splitList(p.options);
+const optionPrices = splitList(p.optionPrices).map(x => Number(x || 0));
+const optionStocks = splitList(p.optionStocks).map(x => Number(x || 0));
+
+// 目前選到第幾個選項（index）
+let currentOptionIndex = 0;
+
+// 目前的單價 & 庫存上限（會隨選項改變）
+let currentUnitPrice = Number(p.price || 0);
+let currentMaxStock  = (p.stock ?? 0) || 9999;
+
 
     box.innerHTML = `
       <div style="display:flex;flex-direction:column-reverse;gap:16px">
@@ -146,69 +164,99 @@
 
     // ===== 下面是互動邏輯 =====
     const unitPriceEl = document.getElementById('unitPrice');
-    const subtotalEl  = document.getElementById('subtotal');
-    const qtyInput    = document.getElementById('qtyInput');
-    const qtyMinusBtn = document.getElementById('qtyMinus');
-    const qtyPlusBtn  = document.getElementById('qtyPlus');
-    const optBox      = document.getElementById('optBox');
-    const addBtn      = document.getElementById('addBtn');
-    const stockTextEl = document.getElementById('stockText');
+const subtotalEl  = document.getElementById('subtotal');
+const qtyInput    = document.getElementById('qtyInput');
+const qtyMinusBtn = document.getElementById('qtyMinus');
+const qtyPlusBtn  = document.getElementById('qtyPlus');
+const optBox      = document.getElementById('optBox');
+const addBtn      = document.getElementById('addBtn');
+const stockTextEl = document.getElementById('stockText');
 
-    unitPriceEl.textContent = fmt(baseUnitPrice);
+// 取得目前選項的單價／庫存（沒有就 fallback）
+function computeUnitPrice() {
+  const v = optionPrices[currentOptionIndex];
+  if (Number.isFinite(v) && v > 0) return v;
+  return Number(p.price || 0);
+}
 
-    // 庫存顯示（不加框）
-    if (stock > 0) {
-      stockTextEl.textContent = `庫存 ${stock}`;
-    } else {
-      stockTextEl.textContent = '缺貨';
-      stockTextEl.style.color = '#b91c1c';
-    }
+function computeMaxStock() {
+  const v = optionStocks[currentOptionIndex];
+  if (Number.isFinite(v) && v > 0) return v;
+  const base = (p.stock ?? 0);
+  return base > 0 ? base : 9999;
+}
+
+function clampQty(n) {
+  let q = Number(n || 1);
+  if (!Number.isFinite(q) || q <= 0) q = 1;
+  if (currentMaxStock > 0) q = Math.min(q, currentMaxStock);
+  return q;
+}
+
+function updateSubtotal() {
+  const qty = clampQty(qtyInput.value);
+  qtyInput.value = qty;
+  subtotalEl.textContent = fmt(currentUnitPrice * qty);
+}
+
+function updatePriceAndStock() {
+  currentUnitPrice = computeUnitPrice();
+  currentMaxStock  = computeMaxStock();
+
+  unitPriceEl.textContent = fmt(currentUnitPrice);
+
+  if (currentMaxStock > 0 && currentMaxStock < 9999) {
+    stockTextEl.textContent = `庫存 ${currentMaxStock}`;
+    stockTextEl.style.color = '#6b7280';
+  } else {
+    stockTextEl.textContent = '庫存充足';
+    stockTextEl.style.color = '#6b7280';
+  }
+
+  updateSubtotal();
+}
+
 
     // ------- 選項：一個選項一個框框 -------
     let currentOption = null;
 
     function renderOptions() {
-  // 先硬塞一組，測試 UI
-  const raw = p.options || p.option || '';
-  console.log('options raw =', JSON.stringify(raw));
-  // const raw = p.options || p.option || '';
-  if (!raw) return;
-
-  const parts = String(raw)
-  .split(/[\/／,，\s]+/)   // 半形 / 、全形 ／、逗號 , ，和空白都會切
-  .map(s => s.trim())
-  .filter(Boolean);
-
-  if (!parts.length) return;
+  if (!optionNames.length) return;
 
   optBox.innerHTML = `
     <div class="small" style="margin-bottom:4px">選項：</div>
     <div id="optionList"
          class="row"
          style="flex-wrap:wrap;gap:8px 8px;margin-top:4px">
-      ${parts.map((v, i) => `
+      ${optionNames.map((v, i) => `
         <button type="button"
                 class="btn secondary optBtn ${i === 0 ? 'is-active' : ''}"
-                data-value="${v}">
+                data-index="${i}">
           ${v}
         </button>
       `).join('')}
     </div>
   `;
 
-      const btns = Array.from(optBox.querySelectorAll('.optBtn'));
-      if (btns.length) {
-        currentOption = btns[0].dataset.value;
-      }
+  const btns = Array.from(optBox.querySelectorAll('.optBtn'));
+  if (btns.length) currentOptionIndex = 0;
 
-      btns.forEach(btn => {
-        btn.addEventListener('click', () => {
-          btns.forEach(b => b.classList.remove('is-active'));
-          btn.classList.add('is-active');
-          currentOption = btn.dataset.value;
-        });
-      });
-    }
+  btns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = Number(btn.dataset.index || 0);
+      currentOptionIndex = idx;
+
+      btns.forEach(b => b.classList.remove('is-active'));
+      btn.classList.add('is-active');
+
+      updatePriceAndStock();
+    });
+  });
+
+  // 初始跑一次，套用第 0 個選項
+  updatePriceAndStock();
+}
+
 
     renderOptions();
 
