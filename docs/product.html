@@ -122,6 +122,11 @@ let currentMaxStock  = (p.stock ?? 0) || 9999;
             : ''
           }
 
+          ${p.deadline
+            ? `<div class="small" style="margin-bottom:4px">結單時間：${p.deadline}</div>`
+            : ''
+          }
+
           <!-- 選項：一個選項一個框框，放在「分類」跟「單價」中間 -->
           <div id="optBox" style="margin:4px 0 8px 0"></div>
 
