@@ -56,7 +56,7 @@
 
 <script type="module">
   import {
-    setCart, getCart, renderCards, getRecent,
+    setCart, getCart, renderCards,
     filterProducts, setupDrawer, initProducts, PRODUCTS
   } from './assets/app.js?v=3';
 
@@ -64,8 +64,6 @@
   await initProducts('1BDw71gFOYp0e2kqOZFkfbV5v1dgC99kgwUEaHwjvxTk','商品');
 
   // DOM
-  const recentGrid = document.getElementById('recentGrid');
-  const newGrid    = document.getElementById('newGrid');
   const allGrid    = document.getElementById('allGrid');
 
   const search     = document.getElementById('search');
@@ -103,15 +101,6 @@
   function rerender(){
     // 全部商品
     renderCards(allGrid, filterByUI(PRODUCTS));
-
-    // 最近看過
-    const recent = filterByUI(getRecent());
-    recentGrid.innerHTML = recent.length ? '' : '<div class="small">還沒有足跡喔～</div>';
-    if (recent.length) renderCards(recentGrid, recent);
-
-    // 新上
-    renderCards(newGrid, filterByUI(PRODUCTS.filter(p=>p.isNew)));
-  }
 
   // 綁事件（只綁存在的元素）
   search?.addEventListener('input', rerender);
