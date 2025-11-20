@@ -180,18 +180,29 @@ let currentMaxStock  = (p.stock ?? 0) || 9999;
     }
 
     function computeMaxStock() {
-      const v = optionStocks[currentOptionIndex];
-      if (Number.isFinite(v) && v > 0) return v;
-      const base = (p.stock ?? 0);
-      return base > 0 ? base : 9999;
-    }
+  // 1) 先看這個選項自己的庫存
+  const vOpt = optionStocks[currentOptionIndex];
+  if (Number.isFinite(vOpt) && vOpt >= 0) return vOpt;
 
-    function clampQty(n) {
-      let q = Number(n || 1);
-      if (!Number.isFinite(q) || q <= 0) q = 1;
-      if (currentMaxStock > 0) q = Math.min(q, currentMaxStock);
-      return q;
-    }
+  // 2) 沒填選項庫存，就看商品整體庫存
+  const vBase = Number(p.stock ?? 0);
+  if (Number.isFinite(vBase) && vBase >= 0) return vBase;
+
+  // 3) 兩邊都沒填，才當成「幾乎無限」
+  return Infinity;
+}
+
+function clampQty(n) {
+  let q = Number(n || 1);
+  if (!Number.isFinite(q) || q <= 0) q = 1;
+
+  // 只有在「有庫存數字」時才限制上限
+  if (Number.isFinite(currentMaxStock) && currentMaxStock > 0) {
+    q = Math.min(q, currentMaxStock);
+  }
+  return q;
+}
+
 
     function updateSubtotal() {
       const qty = clampQty(qtyInput.value);
@@ -199,22 +210,32 @@ let currentMaxStock  = (p.stock ?? 0) || 9999;
       subtotalEl.textContent = fmt(currentUnitPrice * qty);
     }
 
-    function updatePriceAndStock() {
-      currentUnitPrice = computeUnitPrice();
-      currentMaxStock  = computeMaxStock();
+// ✅ 更新價格 + 庫存 + 按鈕狀態
+function updatePriceAndStock() {
+  currentUnitPrice = computeUnitPrice();
+  currentMaxStock  = computeMaxStock();
 
-      unitPriceEl.textContent = fmt(currentUnitPrice);
+  unitPriceEl.textContent = fmt(currentUnitPrice);
 
-      if (currentMaxStock > 0 && currentMaxStock < 9999) {
-        stockTextEl.textContent = `庫存 ${currentMaxStock}`;
-        stockTextEl.style.color = '#6b7280';
-      } else {
-        stockTextEl.textContent = '缺貨';
-        stockTextEl.style.color = '#6b7280';
-      }
+  if (currentMaxStock <= 0) {
+    // 庫存 0：顯示缺貨 + 不能按
+    stockTextEl.textContent = '缺貨';
+    stockTextEl.style.color = '#b91c1c';
+    addBtn.disabled = true;
+  } else if (!Number.isFinite(currentMaxStock) || currentMaxStock >= 9999) {
+    // 沒設定庫存：當成充足
+    stockTextEl.textContent = '庫存充足';
+    stockTextEl.style.color = '#6b7280';
+    addBtn.disabled = false;
+  } else {
+    // 正常有數字的庫存
+    stockTextEl.textContent = `庫存 ${currentMaxStock}`;
+    stockTextEl.style.color = '#6b7280';
+    addBtn.disabled = false;
+  }
 
-      updateSubtotal();
-    }
+  updateSubtotal();
+}
 
     // ------- 選項：一個選項一個框框 -------
     function renderOptions() {
