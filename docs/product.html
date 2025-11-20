@@ -195,6 +195,9 @@ let currentMaxStock  = (p.stock ?? 0) || 9999;
 }
 
 function clampQty(n) {
+  // 如果目前是缺貨，數量就固定為 0
+  if (currentMaxStock <= 0) return 0;
+
   let q = Number(n || 1);
   if (!Number.isFinite(q) || q <= 0) q = 1;
 
@@ -204,6 +207,7 @@ function clampQty(n) {
   }
   return q;
 }
+
 
 
     function updateSubtotal() {
@@ -220,24 +224,45 @@ function updatePriceAndStock() {
   unitPriceEl.textContent = fmt(currentUnitPrice);
 
   if (currentMaxStock <= 0) {
-    // 庫存 0：顯示缺貨 + 不能按
+    // ===== 缺貨狀態 =====
     stockTextEl.textContent = '缺貨';
     stockTextEl.style.color = '#b91c1c';
     addBtn.disabled = true;
-  } else if (!Number.isFinite(currentMaxStock) || currentMaxStock >= 9999) {
-    // 沒設定庫存：當成充足
+
+    // 數量固定 0，且不能改
+    qtyInput.value = 0;
+    qtyInput.disabled = true;
+    qtyMinusBtn.disabled = true;
+    qtyPlusBtn.disabled = true;
+
+    // 小計也變成 0
+    subtotalEl.textContent = '0';
+    return;
+  }
+
+  // ===== 有庫存狀態 =====
+  addBtn.disabled = false;
+  qtyInput.disabled = false;
+  qtyMinusBtn.disabled = false;
+  qtyPlusBtn.disabled = false;
+
+  if (!Number.isFinite(currentMaxStock) || currentMaxStock >= 9999) {
+    // 視為「庫存充足」
     stockTextEl.textContent = '庫存充足';
     stockTextEl.style.color = '#6b7280';
-    addBtn.disabled = false;
   } else {
-    // 正常有數字的庫存
     stockTextEl.textContent = `庫存 ${currentMaxStock}`;
     stockTextEl.style.color = '#6b7280';
-    addBtn.disabled = false;
   }
+
+  // 如果之前是 0 或空值，幫他重設回 1
+  let q = Number(qtyInput.value || 0);
+  if (!Number.isFinite(q) || q <= 0) q = 1;
+  qtyInput.value = clampQty(q);
 
   updateSubtotal();
 }
+
 
     // ------- 選項：一個選項一個框框 -------
     function renderOptions() {
@@ -284,23 +309,25 @@ function updatePriceAndStock() {
     renderOptions();
 
     // ------- 數量 & 小計 -------
-    qtyMinusBtn?.addEventListener('click', () => {
-      let q = clampQty(qtyInput.value);
-      if (q > 1) q--;
-      qtyInput.value = q;
-      updateSubtotal();
-    });
+qtyMinusBtn?.addEventListener('click', () => {
+  if (currentMaxStock <= 0) return; // 缺貨直接無效
+  let q = clampQty(qtyInput.value);
+  if (q > 1) q--;
+  qtyInput.value = q;
+  updateSubtotal();
+});
 
-    qtyPlusBtn?.addEventListener('click', () => {
-      let q = clampQty(qtyInput.value);
-      q++;
-      qtyInput.value = q;
-      updateSubtotal();
-    });
+qtyPlusBtn?.addEventListener('click', () => {
+  if (currentMaxStock <= 0) return; // 缺貨直接無效
+  let q = clampQty(qtyInput.value);
+  q++;
+  qtyInput.value = q;
+  updateSubtotal();
+});
 
-    qtyInput?.addEventListener('input', () => {
-      updateSubtotal();
-    });
+qtyInput?.addEventListener('input', () => {
+  updateSubtotal();
+});
 
     // ------- 加入購物車 -------
     addBtn?.addEventListener('click', () => {
