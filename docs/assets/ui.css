@@ -161,7 +161,7 @@ main{ flex:1 }
 
 /* 商品詳情：被選到的選項要反白 */
 .optBtn.is-active{
-  background:#e5e7eb;     /* 淺灰底 */
-  color:#111;
-  border-color:#111;
+  background:#111;        /* 黑底 */
+  color:#fff;             /* 白字 */
+  border-color:#111;      /* 邊框跟著變黑 */
 }
